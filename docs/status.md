@@ -1,52 +1,61 @@
-# Project Status Report: YoloUNO PlatformIO-RTOS Template
+# Project Status Report: YoloUNO PlatformIO-RTOS
 
-Tài liệu này mô tả trạng thái hiện tại của mã nguồn, các tính năng đã triển khai, cấu trúc hệ thống và các thành phần thư viện đang sử dụng.
-
----
-
-## 1. Cấu hình Hệ thống (Environment)
-- **Platform:** ESP32 (S3) dựa trên nền tảng `espressif32`.
-- **Board:** `yolo_uno`.
-- **Framework:** Arduino với FreeRTOS tích hợp sẵn.
-- **Filesystem:** `LittleFS` được sử dụng để lưu trữ cấu hình và dữ liệu web.
-- **Cấu trúc Module:** Đã phân chia mã nguồn thành các module chuyên biệt (`connectivity`, `sensors`, `actuators`, `web_services`, `cloud`, `tinyml`).
+Tài liệu này mô tả trạng thái hiện tại của mã nguồn, cấu trúc module hóa và vai trò của các thành phần trong hệ thống.
 
 ---
 
-## 2. Các Tính năng Đã Triển khai (Active Features)
+## 1. Cấu trúc Cây Thư mục (Project Tree)
 
-### 2.1. Quản lý Kết nối (Module: `connectivity`)
-- **Cơ chế Dual-Mode:** Hệ thống kiểm tra tệp cấu hình `/info.dat`. Nếu không có thông tin WiFi, nó tự động bật chế độ **Access Point (AP)**. Nếu có, nó kết nối vào mạng **Station (STA)**.
-- **Đồng bộ hóa:** Sử dụng `xBinarySemaphoreInternet` để thông báo cho các tác vụ khác khi đã có kết nối internet.
-
-### 2.2. Thu thập Dữ liệu Cảm biến (Module: `sensors`)
-- **Cảm biến DHT20:** Đọc nhiệt độ và độ ẩm mỗi 5 giây trong tác vụ `temp_humi_monitor`.
-- **Biến Toàn cục:** Dữ liệu cảm biến tạm thời lưu vào `glob_temperature` và `glob_humidity`.
-
-### 2.3. Điều khiển Thiết bị (Module: `actuators`)
-- **LED Đơn:** Tác vụ `led_blinky` điều khiển LED tại chân GPIO 48.
-- **NeoPixel:** Tác vụ `neo_blinky` điều khiển LED RGB tại chân GPIO 45.
-
-### 2.4. Web Server & Giao diện (Module: `web_services`)
-- **AsyncWebServer & WebSocket:** Giao tiếp thời gian thực qua kênh `/ws`.
-- **Cập nhật OTA:** Tích hợp `ElegantOTA` tại `/update`.
-
-### 2.5. Kết nối Cloud (Module: `cloud`)
-- **CoreIOT (ThingsBoard):** Giao thức MQTT để gửi Telemetry và nhận lệnh RPC.
-
-### 2.6. TinyML (Module: `tinyml`)
-- **Model:** `dht_anomaly_model.h` đã sẵn sàng cho nhận diện bất thường.
+```text
+.
+├── data/                       # Dữ liệu web nạp vào LittleFS
+│   ├── images/                 # Chứa logo.png thực tế
+│   ├── index.html              # Giao diện chính (Task 4)
+│   ├── script.js               # Logic WebSocket phía Client
+│   └── styles.css              # Định dạng giao diện
+├── include/
+│   ├── actuators/              # Header điều khiển đầu ra
+│   ├── cloud/                  # Header kết nối ThingsBoard/CoreIOT
+│   ├── connectivity/           # Header quản lý WiFi/Hệ thống
+│   ├── sensors/                # Header đọc dữ liệu cảm biến
+│   ├── tinyml/                 # Header mô hình AI & Inference
+│   ├── web_services/           # Header phục vụ giao diện Web
+│   └── global.h                # Biến dùng chung & Mutex/Semaphore
+├── src/
+│   ├── actuators/              # Code thực thi LED, NeoPixel
+│   ├── cloud/                  # Code MQTT, Telemetry, RPC
+│   ├── connectivity/           # Code kết nối WiFi, LittleFS, Boot logic
+│   ├── sensors/                # Code đọc DHT20, RS485
+│   ├── tinyml/                 # Code chạy mô hình TensorFlow Lite
+│   ├── web_services/           # Code AsyncServer, WebSocket, OTA
+│   ├── global.cpp              # Khởi tạo biến toàn cục & Semaphore
+│   └── main.cpp                # Điểm khởi đầu & Quản lý Task
+├── platformio.ini              # Cấu hình thư viện & Build flags
+└── docs/                       # Tài liệu dự án
+```
 
 ---
 
-## 3. Đánh giá dựa trên Yêu cầu (Specs Match)
-- [x] **Module Organization:** Đã hoàn thành phân chia module cho dễ quản lý.
-- [x] **Task 1 (LED):** Đã có tác vụ, cần thêm logic semaphore.
-- [x] **Task 2 (NeoPixel):** Đã có tác vụ, cần thêm logic ánh xạ độ ẩm.
-- [!] **Task 3 (LCD & Globals):** Cần gỡ bỏ biến toàn cục và đồng bộ qua Semaphore/Mutex.
-- [x] **Task 4 (Web Server):** Hoàn thiện nền tảng Async + WebSocket.
-- [ ] **Task 5 (TinyML):** Cần kích hoạt tác vụ và đánh giá độ chính xác.
-- [x] **Task 6 (CoreIOT):** Đã có logic kết nối cơ bản.
+## 2. Vai trò của các Module
+
+| Module | Vai trò chính | Tệp tin chủ chốt |
+| :--- | :--- | :--- |
+| **Connectivity** | Cảnh sát giao thông: Quản lý kết nối WiFi (AP/STA), kiểm tra tệp cấu hình và xử lý nút nhấn BOOT để reset thiết bị. | `task_wifi`, `task_check_info` |
+| **Sensors** | Người thu thập: Đọc dữ liệu thô từ cảm biến DHT20 và thiết bị công nghiệp qua RS485/Modbus. | `temp_humi_monitor`, `task_rs485` |
+| **Actuators** | Công nhân thực thi: Điều khiển trạng thái LED đơn và hiệu ứng màu sắc trên NeoPixel (RGB). | `led_blinky`, `neo_blinky` |
+| **Web Services** | Cổng thông tin: Cung cấp giao diện Web không đồng bộ (Async), WebSocket thời gian thực và cập nhật Firmware từ xa (OTA). | `task_webserver`, `task_handler` |
+| **Cloud (IoT)** | Phóng viên báo cáo: Giao tiếp với CoreIOT/ThingsBoard qua MQTT để gửi dữ liệu cảm biến và nhận lệnh điều khiển từ xa (RPC). | `task_core_iot` |
+| **TinyML** | Bộ não phân tích: Sử dụng TensorFlow Lite để phân tích dữ liệu cảm biến và phát hiện các dấu hiệu bất thường. | `tinyml`, `dht_anomaly_model.h` |
+
+---
+
+## 3. Trạng thái các Task (Specs Alignment)
+
+- [x] **Kiến trúc Module:** Đã hoàn thành tổ chức mã nguồn theo hướng module hóa chuyên nghiệp.
+- [x] **Đa nhiệm (Multi-tasking):** Tất cả các thành phần đã được chuyển đổi thành FreeRTOS Task độc lập.
+- [x] **Web & OTA:** Đã có hệ thống Web không đồng bộ phục vụ file từ LittleFS và tích hợp ElegantOTA.
+- [!] **Task 3 (Globals):** Cần thực hiện gỡ bỏ biến toàn cục bằng cách sử dụng Mutex/Queue (Đang chuẩn bị).
+- [ ] **TinyML Logic:** Tác vụ đã được tạo nhưng cần thêm logic đánh giá độ chính xác (Task 5).
 
 ---
 *Ngày cập nhật: 12/04/2026*

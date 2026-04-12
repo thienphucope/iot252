@@ -6,8 +6,9 @@
 #include <Arduino_MQTT_Client.h>
 #include <HTTPClient.h>
 #include "connectivity/task_check_info.h"
+#include "global.h"
 
+void task_core_iot(void *pvParameters);
 void CORE_IOT_sendata(String mode, String feed, String data);
-void CORE_IOT_reconnect();
 
 #endif

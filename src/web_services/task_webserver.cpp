@@ -70,5 +70,17 @@ void Webserver_reconnect()
     {
         connnectWSV();
     }
-    ElegantOTA.loop();
+}
+
+void task_webserver_run(void *pvParameters)
+{
+    // Đảm bảo server khởi động lần đầu
+    Webserver_reconnect();
+    
+    while (1)
+    {
+        // Duy trì ElegantOTA (vì nó cần chạy trong vòng lặp)
+        ElegantOTA.loop();
+        vTaskDelay(10 / portTICK_PERIOD_MS); // Nghỉ một chút để nhường CPU cho các task khác
+    }
 }
