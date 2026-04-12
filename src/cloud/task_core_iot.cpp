@@ -1,4 +1,5 @@
 #include "cloud/task_core_iot.h"
+#include "global.h" // Thêm global.h
 
 constexpr uint32_t MAX_MESSAGE_SIZE = 1024U;
 
@@ -81,9 +82,18 @@ void task_core_iot(void *pvParameters)
             Serial.println("[Cloud] Connected and Subscribed!");
         }
 
+        // Task 3: Đọc dữ liệu an toàn dùng Mutex
+        float temp = 0;
+        float humi = 0;
+        if (xSemaphoreTake(xSensorMutex, (TickType_t)100 / portTICK_PERIOD_MS) == pdTRUE) {
+            temp = sharedSensorData.temperature;
+            humi = sharedSensorData.humidity;
+            xSemaphoreGive(xSensorMutex);
+        }
+
         // Gửi dữ liệu cảm biến định kỳ
-        tb.sendTelemetryData("temperature", glob_temperature);
-        tb.sendTelemetryData("humidity", glob_humidity);
+        tb.sendTelemetryData("temperature", temp);
+        tb.sendTelemetryData("humidity", humi);
 
         tb.loop();
         vTaskDelay(10000 / portTICK_PERIOD_MS); // Gửi mỗi 10 giây

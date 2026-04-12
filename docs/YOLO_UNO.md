@@ -49,3 +49,5 @@ YOLO UNO duy trì sơ đồ chân tương đương Arduino UNO nhưng ánh xạ 
 ## 4. Tài liệu tham khảo
 - [Trang sản phẩm OhSTEM](https://ohstem.vn/product/yolo-uno/)
 - [Tài liệu hướng dẫn](https://docs.ohstem.vn/en/latest/esp32/yolo-uno.html)
+
+![YOLO](pinout-mach-yolo-uno-1024x924.png)

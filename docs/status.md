@@ -9,53 +9,47 @@ Tài liệu này mô tả trạng thái hiện tại của mã nguồn, cấu tr
 ```text
 .
 ├── data/                       # Dữ liệu web nạp vào LittleFS
-│   ├── images/                 # Chứa logo.png thực tế
-│   ├── index.html              # Giao diện chính (Task 4)
-│   ├── script.js               # Logic WebSocket phía Client
-│   └── styles.css              # Định dạng giao diện
 ├── include/
-│   ├── actuators/              # Header điều khiển đầu ra
-│   ├── cloud/                  # Header kết nối ThingsBoard/CoreIOT
-│   ├── connectivity/           # Header quản lý WiFi/Hệ thống
-│   ├── sensors/                # Header đọc dữ liệu cảm biến
-│   ├── tinyml/                 # Header mô hình AI & Inference
-│   ├── web_services/           # Header phục vụ giao diện Web
-│   └── global.h                # Biến dùng chung & Mutex/Semaphore
+│   ├── actuators/              # led_blinky.h, neo_blinky.h
+│   ├── cloud/                  # task_core_iot.h
+│   ├── connectivity/           # task_wifi.h, task_check_info.h
+│   ├── sensors/                # temp_humi_monitor.h, lcd_task.h (MỚI)
+│   ├── tinyml/                 # tinyml.h
+│   └── global.h                # Khai báo Queue & Semaphore (Không còn biến toàn cục sensor)
 ├── src/
-│   ├── actuators/              # Code thực thi LED, NeoPixel
-│   ├── cloud/                  # Code MQTT, Telemetry, RPC
-│   ├── connectivity/           # Code kết nối WiFi, LittleFS, Boot logic
-│   ├── sensors/                # Code đọc DHT20, RS485
-│   ├── tinyml/                 # Code chạy mô hình TensorFlow Lite
-│   ├── web_services/           # Code AsyncServer, WebSocket, OTA
-│   ├── global.cpp              # Khởi tạo biến toàn cục & Semaphore
-│   └── main.cpp                # Điểm khởi đầu & Quản lý Task
-├── platformio.ini              # Cấu hình thư viện & Build flags
-└── docs/                       # Tài liệu dự án
+│   ├── actuators/              # Logic LED (Task 1) & NeoPixel (Task 2)
+│   ├── sensors/                # Logic DHT20 & LCD Task (Task 3)
+│   ├── global.cpp              # Khởi tạo Queue & Semaphore
+│   └── main.cpp                # Khởi chạy 8+ RTOS Tasks
+└── docs/                       
+    ├── semaphore.md            # Tài liệu hướng dẫn về Semaphore (MỚI)
+    └── status.md               
 ```
 
 ---
 
-## 2. Vai trò của các Module
+## 2. Vai trò của các Module (Cập nhật)
 
-| Module | Vai trò chính | Tệp tin chủ chốt |
+| Module | Vai trò chính | Trạng thái |
 | :--- | :--- | :--- |
-| **Connectivity** | Cảnh sát giao thông: Quản lý kết nối WiFi (AP/STA), kiểm tra tệp cấu hình và xử lý nút nhấn BOOT để reset thiết bị. | `task_wifi`, `task_check_info` |
-| **Sensors** | Người thu thập: Đọc dữ liệu thô từ cảm biến DHT20 và thiết bị công nghiệp qua RS485/Modbus. | `temp_humi_monitor`, `task_rs485` |
-| **Actuators** | Công nhân thực thi: Điều khiển trạng thái LED đơn và hiệu ứng màu sắc trên NeoPixel (RGB). | `led_blinky`, `neo_blinky` |
-| **Web Services** | Cổng thông tin: Cung cấp giao diện Web không đồng bộ (Async), WebSocket thời gian thực và cập nhật Firmware từ xa (OTA). | `task_webserver`, `task_handler` |
-| **Cloud (IoT)** | Phóng viên báo cáo: Giao tiếp với CoreIOT/ThingsBoard qua MQTT để gửi dữ liệu cảm biến và nhận lệnh điều khiển từ xa (RPC). | `task_core_iot` |
-| **TinyML** | Bộ não phân tích: Sử dụng TensorFlow Lite để phân tích dữ liệu cảm biến và phát hiện các dấu hiệu bất thường. | `tinyml`, `dht_anomaly_model.h` |
+| **Sensors** | Đọc DHT20, đóng gói dữ liệu vào **Queue** và bắn **Semaphore** trạng thái. | Hoàn thành |
+| **LCD Task** | Nhận dữ liệu từ Queue và chuyển 3 trạng thái hiển thị qua Semaphore. | Hoàn thành |
+| **Actuators** | LED chớp theo Temp (Task 1), NeoPixel đổi màu theo Humi (Task 2). | Hoàn thành |
+| **TinyML** | Phân tích dữ liệu để phát hiện bất thường. | Đang phát triển |
 
 ---
 
 ## 3. Trạng thái các Task (Specs Alignment)
 
-- [x] **Kiến trúc Module:** Đã hoàn thành tổ chức mã nguồn theo hướng module hóa chuyên nghiệp.
-- [x] **Đa nhiệm (Multi-tasking):** Tất cả các thành phần đã được chuyển đổi thành FreeRTOS Task độc lập.
-- [x] **Web & OTA:** Đã có hệ thống Web không đồng bộ phục vụ file từ LittleFS và tích hợp ElegantOTA.
-- [!] **Task 3 (Globals):** Cần thực hiện gỡ bỏ biến toàn cục bằng cách sử dụng Mutex/Queue (Đang chuẩn bị).
-- [ ] **TinyML Logic:** Tác vụ đã được tạo nhưng cần thêm logic đánh giá độ chính xác (Task 5).
+- [x] **Kiến trúc Module:** Đã tổ chức mã nguồn theo hướng module hóa chuyên nghiệp.
+- [x] **Task 1 (Single LED):** LED chớp theo 3 mức nhiệt độ (<25, 25-35, >35), đồng bộ qua Queue/Semaphore.
+- [x] **Task 2 (NeoPixel):** NeoPixel đổi màu (Đỏ/Xanh lá/Xanh dương) theo độ ẩm dùng Semaphore.
+- [x] **Task 3 (Globals & LCD):** 
+    - Đã gỡ bỏ **100%** biến toàn cục liên quan đến cảm biến. 
+    - LCD có 3 trạng thái (Normal/Warning/Critical) kích hoạt bằng Semaphore.
+- [ ] **Task 4 (Web Server):** Cần thiết kế lại UI điều khiển 2 thiết bị.
+- [ ] **Task 5 (TinyML):** Cần thêm logic thu thập dataset và đánh giá độ chính xác.
+- [ ] **Task 6 (CoreIOT):** Đang chờ cấu hình Token để đẩy dữ liệu lên Cloud.
 
 ---
 *Ngày cập nhật: 12/04/2026*

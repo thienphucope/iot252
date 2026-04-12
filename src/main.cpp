@@ -3,6 +3,7 @@
 #include "actuators/led_blinky.h"
 #include "actuators/neo_blinky.h"
 #include "sensors/temp_humi_monitor.h"
+#include "sensors/lcd_task.h" // Thêm header LCD
 #include "tinyml/tinyml.h"
 
 // include task
@@ -12,14 +13,18 @@
 #include "web_services/task_webserver.h"
 #include "cloud/task_core_iot.h"
 
+void init_globals(); // Khai báo hàm khởi tạo
+
 void setup()
 {
   Serial.begin(115200);
+  init_globals(); // Khởi tạo Queue/Semaphore trước khi chạy Task
   check_info_File(0);
-
+  
   xTaskCreate(led_blinky, "Task LED Blink", 2048, NULL, 2, NULL);
   xTaskCreate(neo_blinky, "Task NEO Blink", 2048, NULL, 2, NULL);
   xTaskCreate(temp_humi_monitor, "Task TEMP HUMI Monitor", 2048, NULL, 2, NULL);
+  xTaskCreate(lcd_task, "Task LCD Display", 2048, NULL, 2, NULL); // Chạy Task LCD
   xTaskCreate( tiny_ml_task, "Tiny ML Task" ,2048  ,NULL  ,2 , NULL);
   xTaskCreate(task_core_iot, "Task CoreIOT", 4096, NULL, 2, NULL);
   xTaskCreate(task_webserver_run, "Task WebServer", 4096, NULL, 2, NULL);
