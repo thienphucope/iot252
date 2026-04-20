@@ -5,11 +5,7 @@
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void lcd_task(void *pvParameters) {
-    // Khởi tạo I2C với chân SDA=11, SCL=12 (YoloUNO)
-    Wire.begin(11, 12); 
-    
-    // Khởi tạo LCD - Thử dùng begin() nếu init() báo lỗi member
-    lcd.begin(); 
+    lcd.begin();
     lcd.backlight();
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -22,11 +18,10 @@ void lcd_task(void *pvParameters) {
     while (1) {
         // Task 3: Cập nhật giá trị Temp/Humi từ Queue
         if (xSensorQueue != NULL) {
-            if (xQueueReceive(xSensorQueue, &currentData, 0) == pdTRUE) {
-                lcd.setCursor(0, 1);
-                lcd.printf("T:%.1fC H:%.1f%%  ", currentData.temperature, currentData.humidity);
-            }
+            xQueueReceive(xSensorQueue, &currentData, 0);
         }
+        lcd.setCursor(0, 1);
+        lcd.printf("T:%.1fC H:%.1f%%  ", currentData.temperature, currentData.humidity);
 
         // Task 3: Kiểm tra Semaphore trạng thái
         if (xSemaphoreTake(xNormalSemaphore, 0) == pdTRUE) {

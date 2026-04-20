@@ -19,13 +19,26 @@ void setup()
 {
   Serial.begin(115200);
   init_globals(); // Khởi tạo Queue/Semaphore trước khi chạy Task
+  temp_humi_init(); // Khởi tạo I2C + DHT20 một lần duy nhất
   check_info_File(0);
-  
+
+  // Nếu có saved credentials: init STA mode ngay để WiFi stack sẵn sàng
+  // (startAP đã được gọi trong check_info_File nếu không có credentials)
+  // Không block ở đây - việc chờ WL_CONNECTED sẽ do loop() xử lý
+  if (!WIFI_SSID.isEmpty()) {
+    WiFi.mode(WIFI_STA);
+    if (WIFI_PASS.isEmpty()) {
+      WiFi.begin(WIFI_SSID.c_str());
+    } else {
+      WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+    }
+  }
+
   xTaskCreate(led_blinky, "Task LED Blink", 2048, NULL, 2, NULL);
   xTaskCreate(neo_blinky, "Task NEO Blink", 2048, NULL, 2, NULL);
-  xTaskCreate(temp_humi_monitor, "Task TEMP HUMI Monitor", 2048, NULL, 2, NULL);
-  xTaskCreate(lcd_task, "Task LCD Display", 2048, NULL, 2, NULL); // Chạy Task LCD
-  xTaskCreate( tiny_ml_task, "Tiny ML Task" ,2048  ,NULL  ,2 , NULL);
+  xTaskCreate(temp_humi_monitor, "Task TEMP HUMI Monitor", 4096, NULL, 2, NULL);
+  xTaskCreate(lcd_task, "Task LCD Display", 4096, NULL, 2, NULL); // Chạy Task LCD
+  xTaskCreate(tiny_ml_task, "Tiny ML Task" ,4096  ,NULL  ,2 , NULL);
   xTaskCreate(task_core_iot, "Task CoreIOT", 4096, NULL, 2, NULL);
   xTaskCreate(task_webserver_run, "Task WebServer", 4096, NULL, 2, NULL);
   xTaskCreate(Task_Toogle_BOOT, "Task_Toogle_BOOT", 4096, NULL, 2, NULL);

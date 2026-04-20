@@ -3,19 +3,34 @@
 
 DHT20 dht20;
 
-void temp_humi_monitor(void *pvParameters) {
+void temp_humi_init() {
     Wire.begin(11, 12);
-    dht20.begin();
+    delay(200); // DHT20 cần thời gian khởi động
+    bool ok = dht20.begin();
+    Serial.printf("[DHT20] begin() = %s, isConnected=%d\n",
+                  ok ? "OK" : "FAIL", dht20.isConnected());
+}
+
+void temp_humi_monitor(void *pvParameters) {
 
     float last_temp = -100;
     float last_humi = -100;
 
+    // DHT20 cần tối thiểu 1s giữa begin() và read() đầu tiên
+    vTaskDelay(1500 / portTICK_PERIOD_MS);
+
     while (1) {
-        dht20.read();
+        int status = dht20.read();
+        // Retry 1 lần nếu bị lỗi LASTREAD (đọc quá nhanh)
+        if (status == DHT20_ERROR_LASTREAD) {
+            vTaskDelay(1100 / portTICK_PERIOD_MS);
+            status = dht20.read();
+        }
         float temperature = dht20.getTemperature();
         float humidity = dht20.getHumidity();
+        Serial.printf("[DHT20] read=%d  T=%.2f  H=%.2f\n", status, temperature, humidity);
 
-        if (!isnan(temperature) && !isnan(humidity)) {
+        if (status == DHT20_OK && !isnan(temperature) && !isnan(humidity)) {
             // Task 3: Cập nhật shared data qua Mutex (An toàn cho nhiều Task đọc)
             if (xSemaphoreTake(xSensorMutex, portMAX_DELAY) == pdTRUE) {
                 sharedSensorData.temperature = temperature;

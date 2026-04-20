@@ -1,4 +1,5 @@
 #include "web_services/task_webserver.h"
+#include <WiFi.h>
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -74,9 +75,19 @@ void Webserver_reconnect()
 
 void task_webserver_run(void *pvParameters)
 {
-    // Đảm bảo server khởi động lần đầu
+    // Đợi WiFi được khởi tạo (AP hoặc STA) trước khi start server
+    // Nếu gọi server.begin() khi chưa có WiFi mode => crash Invalid mbox
+    while (WiFi.getMode() == WIFI_MODE_NULL)
+    {
+        vTaskDelay(200 / portTICK_PERIOD_MS);
+    }
+    // Chờ thêm để stack TCP ổn định
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    Serial.println("[Web] Starting web server...");
     Webserver_reconnect();
-    
+    Serial.println("[Web] Web server ready");
+
     while (1)
     {
         // Duy trì ElegantOTA (vì nó cần chạy trong vòng lặp)

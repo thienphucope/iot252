@@ -5,6 +5,7 @@
 #include "global.h"
 
 void temp_humi_monitor(void *pvParameters);
+void temp_humi_init();
 
 
 #endif
