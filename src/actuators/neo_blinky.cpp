@@ -10,23 +10,20 @@ void neo_blinky(void *pvParameters) {
     pixels.setBrightness(50);
 
     while (1) {
-        // Task 2: Đợi tín hiệu Semaphore độ ẩm (không dùng biến toàn cục)
-        // Dùng 3 màu cho 3 mức độ ẩm (Yêu cầu Task 2)
-        
+        // Task 2: Dùng semaphore độ ẩm để xác định màu NeoPixel
         if (xSemaphoreTake(xHumiHighSemaphore, 0) == pdTRUE) {
-            // Độ ẩm cao (>70%) -> Màu Xanh Dương (Blue)
+            // Độ ẩm cao (> 60%) -> Màu Xanh Dương (Blue)
             pixels.setPixelColor(0, pixels.Color(0, 0, 255));
             pixels.show();
-        } 
-        else if (xSemaphoreTake(xHumiLowSemaphore, 0) == pdTRUE) {
-            // Độ ẩm thấp (<40%) -> Màu Đỏ (Red)
-            pixels.setPixelColor(0, pixels.Color(255, 0, 0));
+        }
+        else if (xSemaphoreTake(xHumiNormalSemaphore, 0) == pdTRUE) {
+            // Độ ẩm bình thường (40-60%) -> Màu Xanh Lá (Green)
+            pixels.setPixelColor(0, pixels.Color(0, 255, 0));
             pixels.show();
         }
-        else {
-            // Độ ẩm bình thường -> Màu Xanh Lá (Green)
-            // (Thực tế bạn có thể thêm Semaphore Normal Humi nếu muốn)
-            pixels.setPixelColor(0, pixels.Color(0, 255, 0));
+        else if (xSemaphoreTake(xHumiLowSemaphore, 0) == pdTRUE) {
+            // Độ ẩm thấp (< 40%) -> Màu Đỏ (Red)
+            pixels.setPixelColor(0, pixels.Color(255, 0, 0));
             pixels.show();
         }
 

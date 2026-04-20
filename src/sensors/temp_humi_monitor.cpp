@@ -15,13 +15,12 @@ void temp_humi_monitor(void *pvParameters) {
 
     float last_temp = -100;
     float last_humi = -100;
+    int last_status = -1; // -1=init, 0=NORMAL, 1=WARNING, 2=CRITICAL
 
-    // DHT20 cần tối thiểu 1s giữa begin() và read() đầu tiên
     vTaskDelay(1500 / portTICK_PERIOD_MS);
 
     while (1) {
         int status = dht20.read();
-        // Retry 1 lần nếu bị lỗi LASTREAD (đọc quá nhanh)
         if (status == DHT20_ERROR_LASTREAD) {
             vTaskDelay(1100 / portTICK_PERIOD_MS);
             status = dht20.read();
@@ -31,14 +30,7 @@ void temp_humi_monitor(void *pvParameters) {
         Serial.printf("[DHT20] read=%d  T=%.2f  H=%.2f\n", status, temperature, humidity);
 
         if (status == DHT20_OK && !isnan(temperature) && !isnan(humidity)) {
-            // Task 3: Cập nhật shared data qua Mutex (An toàn cho nhiều Task đọc)
-            if (xSemaphoreTake(xSensorMutex, portMAX_DELAY) == pdTRUE) {
-                sharedSensorData.temperature = temperature;
-                sharedSensorData.humidity = humidity;
-                xSemaphoreGive(xSensorMutex);
-            }
-
-            // Task 3: Vẫn đẩy vào Queue để kích hoạt các Task chờ (LED, LCD)
+            // Gửi dữ liệu qua Queue
             struct SensorData data;
             data.temperature = temperature;
             data.humidity = humidity;
@@ -46,19 +38,39 @@ void temp_humi_monitor(void *pvParameters) {
                 xQueueSend(xSensorQueue, &data, 0);
             }
 
-            // Task 3: Phát tín hiệu Semaphore khi trạng thái thay đổi
-            if (temperature < 25.0 && last_temp >= 25.0) {
-                xSemaphoreGive(xNormalSemaphore);
-            } else if (temperature >= 25.0 && temperature < 35.0 && (last_temp < 25.0 || last_temp >= 35.0)) {
-                xSemaphoreGive(xWarningSemaphore);
-            } else if (temperature >= 35.0 && last_temp < 35.0) {
-                xSemaphoreGive(xCriticalSemaphore);
+            // Compute combined status (temp + humidity)
+            int current_status;
+            if (temperature > TEMP_NORMAL_HIGH) {
+                current_status = 2; // CRITICAL
+            } else if (temperature >= TEMP_NORMAL_LOW || humidity < HUMI_NORMAL_LOW || humidity > HUMI_NORMAL_HIGH) {
+                current_status = 1; // WARNING
+            } else {
+                current_status = 0; // NORMAL
             }
 
-            // Task 2: Phát tín hiệu Semaphore cho độ ẩm
-            if (humidity > 70.0 && last_humi <= 70.0) {
+            // Give status semaphore khi status thay đổi
+            if (current_status != last_status) {
+                if (current_status == 2)      xSemaphoreGive(xStatusCriticalSemaphore);
+                else if (current_status == 1) xSemaphoreGive(xStatusWarningSemaphore);
+                else                          xSemaphoreGive(xStatusNormalSemaphore);
+                last_status = current_status;
+            }
+
+            // Tín hiệu semaphore cho LED khi temp thay đổi mức
+            if (temperature < TEMP_NORMAL_LOW && last_temp >= TEMP_NORMAL_LOW) {
+                xSemaphoreGive(xTempLowSemaphore);
+            } else if (temperature >= TEMP_NORMAL_LOW && temperature <= TEMP_NORMAL_HIGH && (last_temp < TEMP_NORMAL_LOW || last_temp > TEMP_NORMAL_HIGH)) {
+                xSemaphoreGive(xTempNormalSemaphore);
+            } else if (temperature > TEMP_NORMAL_HIGH && last_temp <= TEMP_NORMAL_HIGH) {
+                xSemaphoreGive(xTempHighSemaphore);
+            }
+
+            // Tín hiệu semaphore cho NeoPixel khi humi thay đổi mức
+            if (humidity > HUMI_NORMAL_HIGH && last_humi <= HUMI_NORMAL_HIGH) {
                 xSemaphoreGive(xHumiHighSemaphore);
-            } else if (humidity < 40.0 && last_humi >= 40.0) {
+            } else if (humidity >= HUMI_NORMAL_LOW && humidity <= HUMI_NORMAL_HIGH && (last_humi < HUMI_NORMAL_LOW || last_humi > HUMI_NORMAL_HIGH)) {
+                xSemaphoreGive(xHumiNormalSemaphore);
+            } else if (humidity < HUMI_NORMAL_LOW && last_humi >= HUMI_NORMAL_LOW) {
                 xSemaphoreGive(xHumiLowSemaphore);
             }
 

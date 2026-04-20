@@ -1,18 +1,20 @@
 #include "global.h"
 
-// Task 3: Biến cho Queue, Mutex và Shared Data
+// Queue để truyền dữ liệu sensor
 QueueHandle_t xSensorQueue = NULL;
-SemaphoreHandle_t xSensorMutex = NULL;
-struct SensorData sharedSensorData = {0.0, 0.0};
 
 // Các Semaphore trạng thái LCD
-SemaphoreHandle_t xNormalSemaphore = NULL;
-SemaphoreHandle_t xWarningSemaphore = NULL;
-SemaphoreHandle_t xCriticalSemaphore = NULL;
+SemaphoreHandle_t xTempLowSemaphore = NULL;
+SemaphoreHandle_t xTempNormalSemaphore = NULL;
+SemaphoreHandle_t xTempHighSemaphore = NULL;
 
-// Các Semaphore độ ẩm (NeoPixel)
-SemaphoreHandle_t xHumiHighSemaphore = NULL;
 SemaphoreHandle_t xHumiLowSemaphore = NULL;
+SemaphoreHandle_t xHumiNormalSemaphore = NULL;
+SemaphoreHandle_t xHumiHighSemaphore = NULL;
+
+SemaphoreHandle_t xStatusNormalSemaphore = NULL;
+SemaphoreHandle_t xStatusWarningSemaphore = NULL;
+SemaphoreHandle_t xStatusCriticalSemaphore = NULL;
 
 // Các biến cấu hình khác
 String WIFI_SSID;
@@ -34,19 +36,19 @@ void init_globals() {
         xSensorQueue = xQueueCreate(5, sizeof(struct SensorData));
     }
     
-    // Khởi tạo Mutex (Task 3: Resource protection)
-    if (xSensorMutex == NULL) {
-        xSensorMutex = xSemaphoreCreateMutex();
-    }
-    
     // Khởi tạo các Semaphore trạng thái
-    if (xNormalSemaphore == NULL) xNormalSemaphore = xSemaphoreCreateBinary();
-    if (xWarningSemaphore == NULL) xWarningSemaphore = xSemaphoreCreateBinary();
-    if (xCriticalSemaphore == NULL) xCriticalSemaphore = xSemaphoreCreateBinary();
-    
-    if (xHumiHighSemaphore == NULL) xHumiHighSemaphore = xSemaphoreCreateBinary();
-    if (xHumiLowSemaphore == NULL) xHumiLowSemaphore = xSemaphoreCreateBinary();
+    if (xTempLowSemaphore == NULL) xTempLowSemaphore = xSemaphoreCreateBinary();
+    if (xTempNormalSemaphore == NULL) xTempNormalSemaphore = xSemaphoreCreateBinary();
+    if (xTempHighSemaphore == NULL) xTempHighSemaphore = xSemaphoreCreateBinary();
 
-    // Mặc định cho trạng thái Normal
-    xSemaphoreGive(xNormalSemaphore);
+    if (xHumiLowSemaphore == NULL) xHumiLowSemaphore = xSemaphoreCreateBinary();
+    if (xHumiNormalSemaphore == NULL) xHumiNormalSemaphore = xSemaphoreCreateBinary();
+    if (xHumiHighSemaphore == NULL) xHumiHighSemaphore = xSemaphoreCreateBinary();
+
+    if (xStatusNormalSemaphore == NULL) xStatusNormalSemaphore = xSemaphoreCreateBinary();
+    if (xStatusWarningSemaphore == NULL) xStatusWarningSemaphore = xSemaphoreCreateBinary();
+    if (xStatusCriticalSemaphore == NULL) xStatusCriticalSemaphore = xSemaphoreCreateBinary();
+
+    // Mặc định: Normal status
+    xSemaphoreGive(xStatusNormalSemaphore);
 }

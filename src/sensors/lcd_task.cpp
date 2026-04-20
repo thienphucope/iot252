@@ -10,33 +10,32 @@ void lcd_task(void *pvParameters) {
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("SYSTEM STARTING");
+    lcd.clear();
     vTaskDelay(2000 / portTICK_PERIOD_MS);
 
     struct SensorData currentData = {0.0, 0.0};
-    String currentStatus = "NORMAL";
+    String displayStatus = "NORMAL";
 
     while (1) {
-        // Task 3: Cập nhật giá trị Temp/Humi từ Queue
+        // Nhận dữ liệu từ Queue (thread-safe)
         if (xSensorQueue != NULL) {
-            xQueueReceive(xSensorQueue, &currentData, 0);
+            xQueueReceive(xSensorQueue, &currentData, (TickType_t)100 / portTICK_PERIOD_MS);
         }
+        
         lcd.setCursor(0, 1);
         lcd.printf("T:%.1fC H:%.1f%%  ", currentData.temperature, currentData.humidity);
 
-        // Task 3: Kiểm tra Semaphore trạng thái
-        if (xSemaphoreTake(xNormalSemaphore, 0) == pdTRUE) {
-            currentStatus = "NORMAL  ";
-        } 
-        else if (xSemaphoreTake(xWarningSemaphore, 0) == pdTRUE) {
-            currentStatus = "WARNING ";
-        } 
-        else if (xSemaphoreTake(xCriticalSemaphore, 0) == pdTRUE) {
-            currentStatus = "CRITICAL";
+        // Triggered by status semaphores (combined temp + humidity)
+        if (xSemaphoreTake(xStatusCriticalSemaphore, 0) == pdTRUE) {
+            displayStatus = "CRITICAL";
+        } else if (xSemaphoreTake(xStatusWarningSemaphore, 0) == pdTRUE) {
+            displayStatus = "WARNING ";
+        } else if (xSemaphoreTake(xStatusNormalSemaphore, 0) == pdTRUE) {
+            displayStatus = "NORMAL  ";
         }
 
         lcd.setCursor(0, 0);
-        lcd.print("STAT: ");
-        lcd.print(currentStatus);
+        lcd.printf("STAT: %s", displayStatus.c_str());
 
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }

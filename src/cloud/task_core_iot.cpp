@@ -82,18 +82,15 @@ void task_core_iot(void *pvParameters)
             Serial.println("[Cloud] Connected and Subscribed!");
         }
 
-        // Task 3: Đọc dữ liệu an toàn dùng Mutex
-        float temp = 0;
-        float humi = 0;
-        if (xSemaphoreTake(xSensorMutex, (TickType_t)100 / portTICK_PERIOD_MS) == pdTRUE) {
-            temp = sharedSensorData.temperature;
-            humi = sharedSensorData.humidity;
-            xSemaphoreGive(xSensorMutex);
+        // Nhận dữ liệu từ Queue (thread-safe)
+        struct SensorData sensorData = {0.0, 0.0};
+        if (xSensorQueue != NULL) {
+            xQueueReceive(xSensorQueue, &sensorData, 0);
         }
 
         // Gửi dữ liệu cảm biến định kỳ
-        tb.sendTelemetryData("temperature", temp);
-        tb.sendTelemetryData("humidity", humi);
+        tb.sendTelemetryData("temperature", sensorData.temperature);
+        tb.sendTelemetryData("humidity", sensorData.humidity);
 
         tb.loop();
         vTaskDelay(10000 / portTICK_PERIOD_MS); // Gửi mỗi 10 giây

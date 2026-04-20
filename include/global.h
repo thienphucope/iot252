@@ -7,27 +7,35 @@
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
 
+// Threshold constants
+#define TEMP_NORMAL_LOW       25.0f
+#define TEMP_NORMAL_HIGH      30.0f
+#define HUMI_NORMAL_LOW       40.0f
+#define HUMI_NORMAL_HIGH      60.0f
+
 // Task 3: Định nghĩa cấu trúc dữ liệu
 struct SensorData {
     float temperature;
     float humidity;
 };
 
-// Task 3: Cấu trúc dữ liệu và Mutex để chia sẻ giữa nhiều Task
-extern struct SensorData sharedSensorData;
-extern SemaphoreHandle_t xSensorMutex;
-
-// Task 3: Khai báo Queue (vẫn giữ để truyền sự kiện nếu cần)
+// Queue để truyền dữ liệu sensor giữa các Task
 extern QueueHandle_t xSensorQueue;
 
-// Task 3: Khai báo các Semaphore cho trạng thái LCD
-extern SemaphoreHandle_t xNormalSemaphore;
-extern SemaphoreHandle_t xWarningSemaphore;
-extern SemaphoreHandle_t xCriticalSemaphore;
+// Temperature levels: Low (<25), Normal (25-35), High (>=35)
+extern SemaphoreHandle_t xTempLowSemaphore;
+extern SemaphoreHandle_t xTempNormalSemaphore;
+extern SemaphoreHandle_t xTempHighSemaphore;
 
-// Task 2: Semaphore cho NeoPixel theo độ ẩm
-extern SemaphoreHandle_t xHumiHighSemaphore;
+// Humidity levels: Low (<40), Normal (40-70), High (>70)
 extern SemaphoreHandle_t xHumiLowSemaphore;
+extern SemaphoreHandle_t xHumiNormalSemaphore;
+extern SemaphoreHandle_t xHumiHighSemaphore;
+
+// LCD Display Status (combined temp + humidity): Normal, Warning, Critical
+extern SemaphoreHandle_t xStatusNormalSemaphore;
+extern SemaphoreHandle_t xStatusWarningSemaphore;
+extern SemaphoreHandle_t xStatusCriticalSemaphore;
 
 extern String WIFI_SSID;
 extern String WIFI_PASS;

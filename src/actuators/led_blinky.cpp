@@ -3,24 +3,16 @@
 
 void led_blinky(void *pvParameters) {
     pinMode(LED_GPIO, OUTPUT);
-    
-    struct SensorData receivedData;
-    uint32_t blinkInterval = 1000; // Mặc định 1s
+    uint32_t blinkInterval = 1000; // Mặc định 1s (NORMAL)
 
     while (1) {
-        // Task 3: Nhận dữ liệu từ Queue (không dùng biến toàn cục)
-        // Đợi tối đa 100ms để nhận dữ liệu mới, nếu không có thì dùng dữ liệu cũ
-        if (xSensorQueue != NULL) {
-            if (xQueueReceive(xSensorQueue, &receivedData, (TickType_t)100 / portTICK_PERIOD_MS) == pdTRUE) {
-                // Task 1: Thay đổi tốc độ chớp theo 3 mức nhiệt độ
-                if (receivedData.temperature < 25.0) {
-                    blinkInterval = 2000; // Mức 1: Chớp chậm (Mát)
-                } else if (receivedData.temperature >= 25.0 && receivedData.temperature <= 35.0) {
-                    blinkInterval = 1000; // Mức 2: Chớp vừa (Bình thường)
-                } else {
-                    blinkInterval = 200;  // Mức 3: Chớp rất nhanh (Cảnh báo nóng)
-                }
-            }
+        // Task 1: Dùng semaphore để xác định tốc độ chớp theo mức nhiệt độ
+        if (xSemaphoreTake(xTempHighSemaphore, 0) == pdTRUE) {
+            blinkInterval = 200;  // Chớp nhanh: Nóng (> 30°C)
+        } else if (xSemaphoreTake(xTempNormalSemaphore, 0) == pdTRUE) {
+            blinkInterval = 1000; // Chớp vừa: Bình thường (25-30°C)
+        } else if (xSemaphoreTake(xTempLowSemaphore, 0) == pdTRUE) {
+            blinkInterval = 2000; // Chớp chậm: Lạnh (< 25°C)
         }
 
         // Thực hiện chớp LED
