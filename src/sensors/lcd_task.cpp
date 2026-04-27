@@ -19,7 +19,7 @@ void lcd_task(void *pvParameters) {
     while (1) {
         // Nhận dữ liệu từ Queue (thread-safe)
         if (xSensorQueue != NULL) {
-            xQueueReceive(xSensorQueue, &currentData, (TickType_t)100 / portTICK_PERIOD_MS);
+            xQueuePeek(xSensorQueue, &currentData, (TickType_t)100 / portTICK_PERIOD_MS); // Non-destructive: webserver cũng đọc cùng queue
         }
         
         lcd.setCursor(0, 1);

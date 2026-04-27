@@ -1,0 +1,6 @@
+https://www.kaggle.com/datasets/smmmmmmmmmmmm/anomaly-detection-in-iot-devices?resource=
+
+About Dataset
+This project involves the creation of a synthetic dataset tailored for the classification of anomalies in Internet of Things (IoT) devices. The dataset consists of 2000 rows and 5 columns, simulating operational data from various IoT devices. Each entry includes a unique device identifier, temperature readings, humidity levels, battery levels, and an anomaly label indicating whether the data point represents normal or anomalous behavior.
+
+The temperature and humidity columns are generated using normal distributions to mimic realistic environmental conditions, while battery levels are represented as random integers within a specified range. Anomalies are introduced in the dataset by altering the temperature to an unusually high value and setting battery levels to critically low values for a subset of the data, thereby allowing for effective training and testing of anomaly detection algorithms.

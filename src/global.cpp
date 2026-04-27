@@ -27,13 +27,23 @@ String ssid = "ESP32-YOUR NETWORK HERE!!!";
 String password = "12345678";
 String wifi_ssid = "abcde";
 String wifi_password = "123456789";
+String core_iot_token = "default_token_123";
+String core_iot_server = "demo.thingsboard.io";
+String core_iot_port = "1883";
 boolean isWifiConnected = false;
 SemaphoreHandle_t xBinarySemaphoreInternet = xSemaphoreCreateBinary();
 
 // Hàm khởi tạo các đối tượng RTOS
 void init_globals() {
+    // Khởi tạo giá trị mặc định cho các biến cấu hình
+    WIFI_SSID = wifi_ssid;
+    WIFI_PASS = wifi_password;
+    CORE_IOT_TOKEN = core_iot_token;
+    CORE_IOT_SERVER = core_iot_server;
+    CORE_IOT_PORT = core_iot_port;
+
     if (xSensorQueue == NULL) {
-        xSensorQueue = xQueueCreate(5, sizeof(struct SensorData));
+        xSensorQueue = xQueueCreate(1, sizeof(struct SensorData)); // Mailbox: chỉ giữ giá trị mới nhất
     }
     
     // Khởi tạo các Semaphore trạng thái

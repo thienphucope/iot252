@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#include "tinyml/dht_anomaly_model.h"
+#include "tinyml/dht_model_v2.h"
 #include "global.h"
 
 #include <TensorFlowLite_ESP32.h>

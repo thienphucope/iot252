@@ -1,4 +1,6 @@
 #include "web_services/task_handler.h"
+#include "web_services/task_webserver.h"
+#include <WiFi.h>
 
 void handleWebSocketMessage(String message)
 {
@@ -36,13 +38,17 @@ void handleWebSocketMessage(String message)
             Serial.printf("💤 GPIO %d OFF\n", gpio);
         }
     }
+    else if (doc["page"] == "scan_wifi")
+    {
+        Webserver_startWifiScan();
+    }
     else if (doc["page"] == "setting")
     {
-        String WIFI_SSID = doc["value"]["ssid"].as<String>();
-        String WIFI_PASS = doc["value"]["password"].as<String>();
-        String CORE_IOT_TOKEN = doc["value"]["token"].as<String>();
-        String CORE_IOT_SERVER = doc["value"]["server"].as<String>();
-        String CORE_IOT_PORT = doc["value"]["port"].as<String>();
+        WIFI_SSID = doc["value"]["ssid"].as<String>();
+        WIFI_PASS = doc["value"]["password"].as<String>();
+        CORE_IOT_TOKEN = doc["value"]["token"].as<String>();
+        CORE_IOT_SERVER = doc["value"]["server"].as<String>();
+        CORE_IOT_PORT = doc["value"]["port"].as<String>();
 
         Serial.println("📥 Nhận cấu hình từ WebSocket:");
         Serial.println("SSID: " + WIFI_SSID);

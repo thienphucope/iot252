@@ -16,5 +16,6 @@ void task_webserver_run(void *pvParameters);
 void Webserver_stop();
 void Webserver_reconnect();
 void Webserver_sendata(String data);
+void Webserver_startWifiScan();
 
 #endif

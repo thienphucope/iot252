@@ -1,352 +1,535 @@
+/* ==================== BASE ==================== */
+* { box-sizing: border-box; }
+
 body {
-  margin          : 0;
-  font-family     : "Poppins", Arial, sans-serif;
-  display         : flex;
-  height          : 100vh;
-  background-color: #eef2f7;
+  margin      : 0;
+  font-family : "Poppins", Arial, sans-serif;
+  display     : flex;
+  height      : 100vh;
+  background  : #eef2f7;
+  overflow    : hidden;
 }
 
-/* Sidebar */
+/* ==================== SIDEBAR (desktop) ==================== */
 .sidebar {
-  width           : 260px;
-  background-color: #2294F2;
-  color           : white;
-  display         : flex;
-  flex-direction  : column;
-  align-items     : center;
-  box-shadow      : 3px 0 10px rgba(0, 0, 0, 0.2);
+  width          : 240px;
+  min-width      : 240px;
+  background     : #2294F2;
+  color          : white;
+  display        : flex;
+  flex-direction : column;
+  align-items    : center;
+  box-shadow     : 3px 0 10px rgba(0,0,0,0.15);
+  z-index        : 10;
 }
 
 .logo-container {
-  width          : 100%;
-  background     : white;
-  display        : flex;
-  justify-content: center;
-  align-items    : center;
-  padding        : 20px 0;
-  border-bottom  : 2px solid rgba(0, 0, 0, 0.1);
+  width           : 100%;
+  background      : white;
+  display         : flex;
+  justify-content : center;
+  align-items     : center;
+  padding         : 18px 0;
+  border-bottom   : 2px solid rgba(0,0,0,0.08);
 }
-
-.logo-img {
-  width : 80%;
-  height: auto;
-}
+.logo-img { width: 80%; height: auto; }
 
 .nav-item {
-  width        : 90%;
-  padding      : 16px 20px;
-  margin       : 8px 0;
-  font-size    : 18px;
-  font-weight  : 600;
-  cursor       : pointer;
-  border-radius: 10px;
-  color        : #ecf6ff;
-  transition   : all 0.3s ease;
-  display      : flex;
-  align-items  : center;
-  gap          : 12px;
+  width         : 90%;
+  padding       : 14px 18px;
+  margin        : 6px 0;
+  font-size     : 16px;
+  font-weight   : 600;
+  cursor        : pointer;
+  border-radius : 10px;
+  color         : #d6eeff;
+  transition    : all 0.25s ease;
+  display       : flex;
+  align-items   : center;
+  gap           : 12px;
 }
+.nav-item:hover    { background: rgba(255,255,255,0.15); color: #fff; }
+.nav-item.active   { background: #fff; color: #2294F2; box-shadow: 0 4px 10px rgba(0,0,0,0.12); }
+.nav-item i        { width: 20px; text-align: center; }
 
-.nav-item.active {
-  background: #fff;
-  color     : #2294F2;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
+/* ==================== MOBILE NAV (hidden on desktop) ==================== */
+.mobile-nav { display: none; }
 
-/* Main Content */
+/* ==================== MAIN CONTENT ==================== */
 .main-content {
-  flex      : 1;
-  padding   : 40px 60px;
-  overflow-y: auto;
+  flex       : 1;
+  padding    : 36px 48px;
+  overflow-y : auto;
+  min-width  : 0;
 }
 
-/* Home Gauges */
+header h1   { font-size: 26px; font-weight: 700; color: #1a1a2e; margin: 0 0 6px; }
+header p    { color: #666; font-size: 15px; margin: 0 0 28px; }
+
+.section-title {
+  font-size     : 18px;
+  font-weight   : 600;
+  color         : #333;
+  margin        : 28px 0 16px;
+  display       : flex;
+  align-items   : center;
+  gap           : 8px;
+}
+.section-title i { color: #2294F2; }
+
+/* ==================== GAUGES ==================== */
 .gauges-container {
-  display        : flex;
-  flex-wrap      : wrap;
-  gap            : 30px;
-  justify-content: center;
+  display         : flex;
+  flex-wrap       : wrap;
+  gap             : 28px;
+  justify-content : center;
 }
-
 .gauge-card {
-  background   : white;
-  border-radius: 16px;
-  box-shadow   : 0 6px 16px rgba(0, 0, 0, 0.1);
-  padding      : 30px;
-  text-align   : center;
-  width        : 300px;
-  transition   : transform 0.3s ease;
+  background    : white;
+  border-radius : 16px;
+  box-shadow    : 0 6px 16px rgba(0,0,0,0.08);
+  padding       : 28px 24px;
+  text-align    : center;
+  min-width     : 280px;
 }
+.gauge-card h2  { font-size: 17px; color: #333; margin: 0 0 16px; }
+#gauge_temp, #gauge_humi { width: 240px; height: 240px; margin: 0 auto; }
 
-#gauge_temp,
-#gauge_humi {
-  width : 260px;
-  height: 260px;
-  margin: 0 auto;
+/* ==================== STATUS GRID ==================== */
+.status-grid {
+  display         : grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap             : 20px;
+  margin-bottom   : 8px;
 }
-
-/* Device Page */
-.device-list {
-  display        : flex;
-  flex-wrap      : wrap;
-  gap            : 25px;
-  margin-top     : 30px;
-  justify-content: center;
-}
-
-.device-card {
-  background   : #fff;
-  border-radius: 20px;
-  box-shadow   : 0 5px 20px rgba(0, 0, 0, 0.1);
-  width        : 240px;
-  padding      : 25px 20px;
-  text-align   : center;
-  position     : relative;
-  transition   : all 0.3s ease;
-}
-
-.device-card:hover {
-  transform : translateY(-5px);
-  box-shadow: 0 8px 25px rgba(34, 148, 242, 0.25);
-}
-
-.device-icon {
-  font-size    : 36px;
-  color        : #2294F2;
-  margin-bottom: 10px;
-}
-
-.toggle-btn {
-  width        : 100%;
-  border       : none;
-  border-radius: 12px;
-  padding      : 12px;
-  font-weight  : 600;
-  font-size    : 16px;
-  cursor       : pointer;
-  background   : #e3e3e3;
-  transition   : 0.3s;
-}
-
-.toggle-btn.on {
-  background: linear-gradient(90deg, #2294F2, #1b7fe0);
-  color     : white;
-  box-shadow: 0 4px 12px rgba(34, 148, 242, 0.4);
-}
-
-.delete-icon {
-  position: absolute;
-  top     : 10px;
-  right   : 12px;
-  color   : #e74c3c;
-  cursor  : pointer;
-}
-
-.add-relay-btn {
-  position     : fixed;
-  bottom       : 35px;
-  right        : 35px;
-  background   : linear-gradient(135deg, #2294F2, #1a75e6);
-  color        : white;
-  border       : none;
-  border-radius: 50%;
-  width        : 80px;
-  /* to hơn chút */
-  height       : 80px;
-  font-size    : 34px;
-  /* icon lớn hơn */
-  cursor       : pointer;
-  box-shadow   : 0 6px 20px rgba(0, 0, 0, 0.25);
-  transition   : 0.3s;
-}
-
-.add-relay-btn:hover {
-  transform : scale(1.08);
-  box-shadow: 0 8px 25px rgba(34, 148, 242, 0.4);
-}
-
-
-/* Settings */
-.settings-section {
-  display        : flex;
-  justify-content: center;
-  align-items    : flex-start;
-  padding-top    : 40px;
-  height         : 100%;
-}
-
-.settings-card {
-  background   : white;
-  padding      : 50px 60px;
-  border-radius: 20px;
-  box-shadow   : 0 10px 25px rgba(0, 0, 0, 0.15);
-  width        : 850px;
-  /* ✅ to hơn */
-  max-width    : 95%;
-  text-align   : center;
-}
-
-.settings-card h2 {
-  color        : #2294F2;
-  margin-bottom: 15px;
-}
-
-.settings-card p {
-  color        : #666;
-  margin-bottom: 35px;
-  font-size    : 15px;
-}
-
-/* FORM STYLE — vertical layout with spacing */
-#settingsForm {
-  width         : 100%;
+.status-card {
+  background    : white;
+  border-radius : 16px;
+  box-shadow    : 0 4px 14px rgba(0,0,0,0.07);
+  padding       : 24px 16px;
+  text-align    : center;
   display       : flex;
   flex-direction: column;
   align-items   : center;
+  gap           : 8px;
+}
+.status-icon   { font-size: 32px; color: #2294F2; }
+.status-label  { font-size: 15px; font-weight: 600; color: #333; }
+.status-sub    { font-size: 12px; color: #999; }
+
+/* ==================== BADGES ==================== */
+.badge {
+  display       : inline-block;
+  padding       : 5px 14px;
+  border-radius : 20px;
+  font-size     : 13px;
+  font-weight   : 600;
+  letter-spacing: 0.3px;
+}
+.badge-muted   { background: #f0f0f0; color: #999; }
+.badge-success { background: #e8f5e9; color: #2e7d32; }
+.badge-warning { background: #fff8e1; color: #f57f17; }
+.badge-danger  { background: #ffebee; color: #c62828; }
+.badge-info    { background: #e3f2fd; color: #1565c0; }
+.badge-blue    { background: #e3f2fd; color: #1565c0; }
+
+/* ==================== DEVICE (RELAY) ==================== */
+.device-list {
+  display         : flex;
+  flex-wrap       : wrap;
+  gap             : 20px;
+  margin-top      : 8px;
+  justify-content : flex-start;
+}
+.empty-hint { color: #aaa; font-size: 15px; padding: 16px 0; }
+
+.device-card {
+  background    : #fff;
+  border-radius : 18px;
+  box-shadow    : 0 4px 16px rgba(0,0,0,0.08);
+  width         : 220px;
+  padding       : 22px 18px;
+  text-align    : center;
+  position      : relative;
+  transition    : all 0.25s ease;
+}
+.device-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(34,148,242,0.2); }
+.device-icon    { font-size: 34px; color: #2294F2; margin-bottom: 8px; }
+.device-card h3 { font-size: 16px; margin: 4px 0; }
+.device-card p  { font-size: 13px; color: #888; margin: 0 0 14px; }
+
+.toggle-btn {
+  width         : 100%;
+  border        : none;
+  border-radius : 10px;
+  padding       : 11px;
+  font-weight   : 600;
+  font-size     : 15px;
+  cursor        : pointer;
+  background    : #e8e8e8;
+  color         : #555;
+  transition    : 0.25s;
+}
+.toggle-btn.on {
+  background : linear-gradient(90deg, #2294F2, #1b7fe0);
+  color      : white;
+  box-shadow : 0 4px 12px rgba(34,148,242,0.35);
 }
 
-/* mỗi input-group là 1 dòng, cách nhau */
+.delete-icon { position: absolute; top: 10px; right: 12px; color: #e74c3c; cursor: pointer; font-size: 15px; }
+
+.add-relay-btn {
+  position      : fixed;
+  bottom        : 32px;
+  right         : 32px;
+  background    : linear-gradient(135deg, #2294F2, #1a75e6);
+  color         : white;
+  border        : none;
+  border-radius : 50%;
+  width         : 64px;
+  height        : 64px;
+  font-size     : 28px;
+  cursor        : pointer;
+  box-shadow    : 0 6px 20px rgba(0,0,0,0.2);
+  transition    : 0.25s;
+  display       : flex;
+  align-items   : center;
+  justify-content: center;
+}
+.add-relay-btn:hover { transform: scale(1.1); box-shadow: 0 8px 24px rgba(34,148,242,0.4); }
+
+/* ==================== INFO GRID ==================== */
+.info-grid {
+  display               : grid;
+  grid-template-columns : repeat(auto-fill, minmax(220px, 1fr));
+  gap                   : 20px;
+}
+.info-card {
+  background    : white;
+  border-radius : 16px;
+  box-shadow    : 0 4px 14px rgba(0,0,0,0.07);
+  padding       : 22px 20px;
+  display       : flex;
+  flex-direction: column;
+  align-items   : center;
+  gap           : 8px;
+  text-align    : center;
+}
+.info-icon-wrap {
+  width         : 48px;
+  height        : 48px;
+  border-radius : 50%;
+  background    : #e8f2fe;
+  display       : flex;
+  align-items   : center;
+  justify-content: center;
+  font-size     : 20px;
+  color         : #2294F2;
+}
+.info-label { font-size: 13px; color: #888; font-weight: 500; }
+.info-value { font-size: 15px; font-weight: 600; color: #222; word-break: break-all; }
+
+/* ==================== SETTINGS ==================== */
+.settings-section {
+  display         : flex;
+  justify-content : center;
+  align-items     : flex-start;
+  padding-top     : 20px;
+  height          : 100%;
+}
+.settings-card {
+  background    : white;
+  padding       : 40px 50px;
+  border-radius : 20px;
+  box-shadow    : 0 10px 28px rgba(0,0,0,0.1);
+  width         : 800px;
+  max-width     : 100%;
+  text-align    : center;
+}
+.settings-card h2 { color: #2294F2; margin-bottom: 8px; font-size: 22px; }
+.settings-card > p { color: #888; margin-bottom: 28px; font-size: 14px; }
+
+.settings-group-title {
+  font-size     : 14px;
+  font-weight   : 600;
+  color         : #2294F2;
+  text-align    : left;
+  margin        : 20px 0 12px;
+  padding-left  : 4px;
+  border-left   : 3px solid #2294F2;
+  padding-left  : 10px;
+}
+
+#settingsForm { width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+.wifi-select-row {
+  display   : flex;
+  gap       : 10px;
+  width     : 100%;
+  max-width : 700px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+.wifi-ssid-input { flex: 1; margin-bottom: 0 !important; }
+
+.btn-scan {
+  background    : #e8f2fe;
+  color         : #2294F2;
+  border        : 1.5px solid #2294F2;
+  border-radius : 12px;
+  padding       : 0 18px;
+  font-size     : 14px;
+  font-weight   : 600;
+  cursor        : pointer;
+  white-space   : nowrap;
+  transition    : 0.25s;
+}
+.btn-scan:hover { background: #2294F2; color: white; }
+
 .input-group {
-  position     : relative;
-  width        : 98%;
-  /* ✅ rộng gần hết khung */
-  max-width    : 760px;
-  /* ✅ dài hơn hẳn */
-  margin-bottom: 20px;
-  /* ✅ tạo khoảng cách giữa các dòng */
+  position      : relative;
+  width         : 100%;
+  max-width     : 700px;
+  margin-bottom : 16px;
 }
-
 .input-group i {
-  position : absolute;
-  top      : 50%;
-  left     : 18px;
-  transform: translateY(-50%);
-  color    : #2294F2;
-  font-size: 18px;
+  position  : absolute;
+  top       : 50%;
+  left      : 16px;
+  transform : translateY(-50%);
+  color     : #2294F2;
+  font-size : 17px;
 }
-
 .input-group input {
   width           : 100%;
-  padding         : 16px 18px 16px 54px;
-  border-radius   : 14px;
-  border          : 1.5px solid #ccc;
-  font-size       : 17px;
-  background-color: #f9f9f9;
-  transition      : all 0.3s ease;
-  box-sizing      : border-box;
+  padding         : 15px 16px 15px 50px;
+  border-radius   : 12px;
+  border          : 1.5px solid #ddd;
+  font-size       : 15px;
+  background      : #fafafa;
+  transition      : 0.25s;
 }
-
 .input-group input:focus {
-  border-color    : #2294F2;
-  box-shadow      : 0 0 10px rgba(34, 148, 242, 0.25);
-  background-color: #fff;
+  border-color : #2294F2;
+  box-shadow   : 0 0 0 3px rgba(34,148,242,0.12);
+  background   : #fff;
+  outline      : none;
 }
 
-/* Save Button */
 .btn-save {
-  margin-top   : 25px;
-  background   : linear-gradient(90deg, #2294F2, #1b7fe0);
-  color        : white;
-  border       : none;
-  border-radius: 12px;
-  padding      : 16px 44px;
-  font-size    : 18px;
-  font-weight  : 600;
-  cursor       : pointer;
-  box-shadow   : 0 6px 18px rgba(34, 148, 242, 0.45);
-  transition   : all 0.3s ease;
+  margin-top    : 24px;
+  background    : linear-gradient(90deg, #2294F2, #1b7fe0);
+  color         : white;
+  border        : none;
+  border-radius : 12px;
+  padding       : 14px 40px;
+  font-size     : 16px;
+  font-weight   : 600;
+  cursor        : pointer;
+  box-shadow    : 0 5px 16px rgba(34,148,242,0.4);
+  transition    : 0.25s;
 }
+.btn-save:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(34,148,242,0.5); }
 
-.btn-save:hover {
-  transform : translateY(-2px);
-  box-shadow: 0 8px 22px rgba(34, 148, 242, 0.55);
-}
-
-
-/* Dialog */
+/* ==================== DIALOGS ==================== */
 .dialog-overlay {
-  position       : fixed;
-  top            : 0;
-  left           : 0;
-  right          : 0;
-  bottom         : 0;
-  background     : rgba(0, 0, 0, 0.5);
-  display        : flex;
-  justify-content: center;
-  align-items    : center;
-  z-index        : 100;
+  position        : fixed;
+  inset           : 0;
+  background      : rgba(0,0,0,0.45);
+  display         : flex;
+  justify-content : center;
+  align-items     : center;
+  z-index         : 200;
 }
-
 .dialog {
-  background   : white;
-  border-radius: 20px;
-  padding      : 35px 30px;
-  width        : 380px;
-  text-align   : center;
-  box-shadow   : 0 12px 35px rgba(0, 0, 0, 0.25);
-  animation    : popIn 0.25s ease;
+  background    : white;
+  border-radius : 20px;
+  padding       : 32px 28px;
+  width         : 360px;
+  max-width     : 92vw;
+  text-align    : center;
+  box-shadow    : 0 12px 36px rgba(0,0,0,0.2);
+  animation     : popIn 0.22s ease;
 }
-
-.dialog h3 {
-  font-size: 22px;
-  color    : #2294F2;
-}
-
-.dialog.warning h3 {
-  color: #e74c3c;
-}
-
-.dialog p {
-  color    : #666;
-  font-size: 15px;
-}
+.dialog h3      { font-size: 20px; color: #2294F2; margin: 0 0 8px; }
+.dialog p       { color: #666; font-size: 14px; margin: 0 0 20px; }
+.dialog.warning h3 { color: #e74c3c; }
 
 .input-field input {
-  width        : 90%;
-  padding      : 12px;
-  border       : 1.5px solid #ccc;
-  border-radius: 10px;
-  margin-bottom: 15px;
+  width         : 100%;
+  padding       : 12px 14px;
+  border        : 1.5px solid #ddd;
+  border-radius : 10px;
+  margin-bottom : 12px;
+  font-size     : 15px;
+  transition    : 0.2s;
 }
+.input-field input:focus { border-color: #2294F2; outline: none; }
 
 .dialog-buttons {
-  display        : flex;
-  justify-content: center;
-  gap            : 15px;
+  display         : flex;
+  justify-content : center;
+  gap             : 12px;
+  margin-top      : 8px;
 }
-
 .dialog-buttons button {
-  padding      : 10px 22px;
-  border       : none;
-  border-radius: 10px;
-  font-weight  : 600;
-  cursor       : pointer;
-  transition   : 0.3s;
+  padding       : 10px 22px;
+  border        : none;
+  border-radius : 10px;
+  font-weight   : 600;
+  font-size     : 14px;
+  cursor        : pointer;
+  transition    : 0.2s;
 }
+.dialog-buttons .confirm { background: linear-gradient(90deg,#2294F2,#1b7fe0); color: white; }
+.dialog-buttons .danger  { background: #e74c3c; color: white; }
+.dialog-buttons .cancel  { background: #eee; color: #444; }
+.dialog-buttons button:hover { opacity: 0.88; transform: translateY(-1px); }
 
-.dialog-buttons .confirm {
-  background: linear-gradient(90deg, #2294F2, #1b7fe0);
-  color     : white;
+/* ==================== WIFI SCAN DIALOG ==================== */
+.wifi-dialog {
+  width     : 420px;
+  max-width : 94vw;
+  padding   : 28px 24px;
 }
-
-.dialog-buttons .danger {
-  background: #e74c3c;
-  color     : white;
+.scan-status {
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
+  gap             : 10px;
+  color           : #888;
+  font-size       : 14px;
+  padding         : 16px 0;
 }
-
-.dialog-buttons .cancel {
-  background: #ddd;
-  color     : #333;
+.wifi-list {
+  max-height    : 340px;
+  overflow-y    : auto;
+  margin        : 8px 0 16px;
+  border-radius : 12px;
+  border        : 1px solid #eee;
 }
+.wifi-item {
+  display         : flex;
+  justify-content : space-between;
+  align-items     : center;
+  padding         : 13px 16px;
+  cursor          : pointer;
+  border-bottom   : 1px solid #f5f5f5;
+  transition      : background 0.15s;
+}
+.wifi-item:last-child { border-bottom: none; }
+.wifi-item:hover      { background: #f0f7ff; }
+.wifi-item-left  { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.wifi-item-right { display: flex; align-items: center; gap: 8px; }
+.wifi-name  { font-size: 15px; font-weight: 600; color: #222; }
+.wifi-rssi  { font-size: 12px; color: #999; }
+.wifi-lock  { color: #888; font-size: 13px; }
+.wifi-open  { color: #ccc; font-size: 13px; }
+.no-wifi    { color: #aaa; font-size: 14px; padding: 20px 0; text-align: center; }
 
+/* ==================== ANIMATIONS ==================== */
 @keyframes popIn {
-  from {
-    transform: scale(0.8);
-    opacity  : 0;
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.section { animation: fadeIn 0.3s ease; }
+
+/* ==================== RESPONSIVE (tablet) ==================== */
+@media (max-width: 900px) {
+  .main-content { padding: 28px 28px; }
+  .status-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ==================== RESPONSIVE (mobile) ==================== */
+@media (max-width: 640px) {
+  body {
+    flex-direction : column;
+    height         : 100dvh;
+    overflow       : hidden;
   }
 
-  to {
-    transform: scale(1);
-    opacity  : 1;
+  /* Hide desktop sidebar */
+  .sidebar { display: none; }
+
+  /* Show mobile bottom nav */
+  .mobile-nav {
+    display         : flex;
+    position        : fixed;
+    bottom          : 0;
+    left            : 0;
+    right           : 0;
+    height          : 62px;
+    background      : white;
+    border-top      : 1px solid #e8e8e8;
+    box-shadow      : 0 -2px 12px rgba(0,0,0,0.08);
+    z-index         : 100;
+    justify-content : space-around;
+    align-items     : center;
   }
+  .mobile-nav-item {
+    display         : flex;
+    flex-direction  : column;
+    align-items     : center;
+    gap             : 3px;
+    font-size       : 10px;
+    font-weight     : 600;
+    color           : #aaa;
+    cursor          : pointer;
+    padding         : 6px 12px;
+    border-radius   : 10px;
+    transition      : 0.2s;
+    flex            : 1;
+  }
+  .mobile-nav-item i    { font-size: 20px; }
+  .mobile-nav-item.active { color: #2294F2; }
+
+  /* Main content fills remaining space */
+  .main-content {
+    flex           : 1;
+    padding        : 20px 16px;
+    padding-bottom : 72px;
+    overflow-y     : auto;
+    height         : calc(100dvh - 62px);
+  }
+
+  header h1  { font-size: 20px; }
+  header p   { font-size: 13px; margin-bottom: 18px; }
+
+  /* Stack gauges */
+  .gauges-container { flex-direction: column; align-items: center; gap: 16px; }
+  .gauge-card       { width: 100%; min-width: unset; padding: 20px 16px; }
+  #gauge_temp, #gauge_humi { width: 200px; height: 200px; }
+
+  /* Status grid 1 column */
+  .status-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Device cards full width */
+  .device-card  { width: 100%; }
+  .device-list  { justify-content: center; }
+
+  /* Info grid 2 columns */
+  .info-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .info-card { padding: 16px 12px; }
+
+  /* Settings */
+  .settings-section { align-items: flex-start; padding-top: 0; height: auto; }
+  .settings-card    { padding: 24px 18px; border-radius: 16px; }
+  .wifi-select-row  { flex-direction: column; }
+  .btn-scan         { padding: 12px 18px; }
+
+  /* FAB relay button above mobile nav */
+  .add-relay-btn { bottom: 80px; right: 20px; width: 54px; height: 54px; font-size: 24px; }
+
+  /* Dialogs */
+  .dialog { width: 90vw; padding: 24px 18px; }
+  .wifi-dialog { width: 94vw; }
+  .wifi-list { max-height: 260px; }
+}
+
+@media (max-width: 400px) {
+  .info-grid { grid-template-columns: 1fr; }
 }

@@ -47,6 +47,9 @@ extern String ssid;
 extern String password;
 extern String wifi_ssid;
 extern String wifi_password;
+extern String core_iot_token;
+extern String core_iot_server;
+extern String core_iot_port;
 
 extern boolean isWifiConnected;
 extern SemaphoreHandle_t xBinarySemaphoreInternet;

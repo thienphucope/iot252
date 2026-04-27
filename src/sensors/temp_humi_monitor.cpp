@@ -35,7 +35,7 @@ void temp_humi_monitor(void *pvParameters) {
             data.temperature = temperature;
             data.humidity = humidity;
             if (xSensorQueue != NULL) {
-                xQueueSend(xSensorQueue, &data, 0);
+                xQueueOverwrite(xSensorQueue, &data); // Mailbox: ghi đè giá trị cũ
             }
 
             // Compute combined status (temp + humidity)
