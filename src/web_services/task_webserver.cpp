@@ -6,7 +6,14 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
 bool webserver_isrunning = false;
-static bool s_wifiScanPending = false;
+static bool     s_wifiScanPending = false;
+static bool     s_restartPending  = false;
+static uint32_t s_restartAt       = 0;
+
+void Webserver_scheduleRestart(uint32_t delayMs) {
+    s_restartPending = true;
+    s_restartAt      = millis() + delayMs;
+}
 
 static void sendDeviceInfo(AsyncWebSocketClient *client = nullptr) {
     StaticJsonDocument<1024> doc;
@@ -57,6 +64,17 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
         Serial.printf("WebSocket client #%u connected from %s\n",
                       client->id(), client->remoteIP().toString().c_str());
         sendDeviceInfo(client);
+        // Gửi sensor data ngay lập tức để client không dùng mock data
+        SensorData data;
+        if (xSensorQueue != NULL && xQueuePeek(xSensorQueue, &data, 0) == pdTRUE) {
+            const char* lcd = (data.lcd_status == 2) ? "CRITICAL" :
+                              (data.lcd_status == 1) ? "WARNING"  : "NORMAL";
+            char json[128];
+            snprintf(json, sizeof(json),
+                     "{\"type\":\"sensor\",\"temp\":%.1f,\"humi\":%.1f,\"lcd\":\"%s\"}",
+                     data.temperature, data.humidity, lcd);
+            client->text(String(json));
+        }
     } else if (type == WS_EVT_DISCONNECT) {
         Serial.printf("WebSocket client #%u disconnected\n", client->id());
     } else if (type == WS_EVT_DATA) {
@@ -71,12 +89,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 void connnectWSV() {
     ws.onEvent(onEvent);
     server.addHandler(&ws);
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(LittleFS, "/index.html", "text/html"); });
-    server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(LittleFS, "/script.js", "application/javascript"); });
-    server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(LittleFS, "/styles.css", "text/css"); });
+    server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
     server.begin();
     ElegantOTA.begin(&server);
     webserver_isrunning = true;
@@ -95,10 +108,22 @@ void Webserver_reconnect() {
 }
 
 void task_webserver_run(void *pvParameters) {
-    while (WiFi.getMode() == WIFI_MODE_NULL) {
+    // Đợi cho đến khi WiFi có IP (AP hoặc STA)
+    while (true) {
+        wifi_mode_t mode = WiFi.getMode();
+        if ((mode == WIFI_AP || mode == WIFI_AP_STA) &&
+            WiFi.softAPIP() != IPAddress(0, 0, 0, 0)) {
+            Serial.print("[Web] AP IP: ");
+            Serial.println(WiFi.softAPIP());
+            break;
+        }
+        if (mode == WIFI_STA && WiFi.status() == WL_CONNECTED) {
+            Serial.print("[Web] STA IP: ");
+            Serial.println(WiFi.localIP());
+            break;
+        }
         vTaskDelay(200 / portTICK_PERIOD_MS);
     }
-    vTaskDelay(500 / portTICK_PERIOD_MS);
 
     Serial.println("[Web] Starting web server...");
     Webserver_reconnect();
@@ -118,10 +143,12 @@ void task_webserver_run(void *pvParameters) {
             lastSensorTick = now;
             SensorData data;
             if (xSensorQueue != NULL && xQueuePeek(xSensorQueue, &data, 0) == pdTRUE) {
-                char json[96];
+                const char* lcd = (data.lcd_status == 2) ? "CRITICAL" :
+                                  (data.lcd_status == 1) ? "WARNING"  : "NORMAL";
+                char json[128];
                 snprintf(json, sizeof(json),
-                         "{\"type\":\"sensor\",\"temp\":%.1f,\"humi\":%.1f}",
-                         data.temperature, data.humidity);
+                         "{\"type\":\"sensor\",\"temp\":%.1f,\"humi\":%.1f,\"lcd\":\"%s\"}",
+                         data.temperature, data.humidity, lcd);
                 ws.textAll(String(json));
             }
         }
@@ -153,6 +180,11 @@ void task_webserver_run(void *pvParameters) {
                 ws.textAll(result);
                 WiFi.scanDelete();
             }
+        }
+
+        if (s_restartPending && millis() >= s_restartAt) {
+            s_restartPending = false;
+            ESP.restart();
         }
 
         vTaskDelay(100 / portTICK_PERIOD_MS);

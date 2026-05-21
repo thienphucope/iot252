@@ -16,31 +16,27 @@ SemaphoreHandle_t xStatusNormalSemaphore = NULL;
 SemaphoreHandle_t xStatusWarningSemaphore = NULL;
 SemaphoreHandle_t xStatusCriticalSemaphore = NULL;
 
-// Các biến cấu hình khác
-String WIFI_SSID;
-String WIFI_PASS;
-String CORE_IOT_TOKEN;
-String CORE_IOT_SERVER;
-String CORE_IOT_PORT;
+// Các biến cấu hình khác (Load_info_File() sẽ ghi đè nếu có file đã lưu)
+String WIFI_SSID       = DEFAULT_WIFI_SSID;
+String WIFI_PASS       = DEFAULT_WIFI_PASS;
+String CORE_IOT_TOKEN  = DEFAULT_COREIOT_TOKEN;
+String CORE_IOT_SERVER = DEFAULT_COREIOT_SERVER;
+String CORE_IOT_PORT   = DEFAULT_COREIOT_PORT;
 
-String ssid = "ESP32-YOUR NETWORK HERE!!!";
-String password = "12345678";
-String wifi_ssid = "abcde";
-String wifi_password = "123456789";
-String core_iot_token = "default_token_123";
-String core_iot_server = "demo.thingsboard.io";
-String core_iot_port = "1883";
+String ssid     = SSID_AP;
+String password = String(PASS_AP);
+String wifi_ssid;
+String wifi_password;
+String core_iot_token;
+String core_iot_server;
+String core_iot_port;
 boolean isWifiConnected = false;
 SemaphoreHandle_t xBinarySemaphoreInternet = xSemaphoreCreateBinary();
 
 // Hàm khởi tạo các đối tượng RTOS
 void init_globals() {
-    // Khởi tạo giá trị mặc định cho các biến cấu hình
-    WIFI_SSID = wifi_ssid;
-    WIFI_PASS = wifi_password;
-    CORE_IOT_TOKEN = core_iot_token;
-    CORE_IOT_SERVER = core_iot_server;
-    CORE_IOT_PORT = core_iot_port;
+    // WIFI_SSID/WIFI_PASS phải bắt đầu rỗng để check_info_File() có thể kích hoạt AP mode
+    // khi chưa có credentials. Giá trị sẽ được nạp từ LittleFS bởi Load_info_File().
 
     if (xSensorQueue == NULL) {
         xSensorQueue = xQueueCreate(1, sizeof(struct SensorData)); // Mailbox: chỉ giữ giá trị mới nhất

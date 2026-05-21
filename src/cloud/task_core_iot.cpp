@@ -1,98 +1,71 @@
 #include "cloud/task_core_iot.h"
-#include "global.h" // Thêm global.h
 
-constexpr uint32_t MAX_MESSAGE_SIZE = 1024U;
+#define MQTT_TOPIC  "esp/telemetry"
 
-WiFiClient wifiClient;
-Arduino_MQTT_Client mqttClient(wifiClient);
-ThingsBoard tb(mqttClient, MAX_MESSAGE_SIZE);
-
-constexpr char LED_STATE_ATTR[] = "ledState";
-
-void processSharedAttributes(const Shared_Attribute_Data &data)
-{
-    for (auto it = data.begin(); it != data.end(); ++it)
-    {
-        // Xử lý các thuộc tính chia sẻ từ server ở đây
-    }
-}
-
-RPC_Response setLedSwitchValue(const RPC_Data &data)
-{
-    Serial.println("Received Switch state from Cloud");
-    bool newState = data;
-    Serial.print("Cloud LED command: ");
-    Serial.println(newState ? "ON" : "OFF");
-    return RPC_Response("setLedSwitchValue", newState);
-}
-
-const std::array<RPC_Callback, 1U> callbacks = {
-    RPC_Callback{"setLedSwitchValue", setLedSwitchValue}};
-
-// Sử dụng đúng kiểu dữ liệu và thứ tự tham số cho ThingsBoard Callback
-const Shared_Attribute_Callback attributes_callback(processSharedAttributes, std::vector<const char*>{LED_STATE_ATTR});
-const Attribute_Request_Callback attribute_shared_request_callback(processSharedAttributes, std::vector<const char*>{LED_STATE_ATTR});
-
-void CORE_IOT_sendata(String mode, String feed, String data)
-{
-    if (mode == "attribute")
-    {
-        tb.sendAttributeData(feed.c_str(), data.c_str());
-    }
-    else if (mode == "telemetry")
-    {
-        float value = data.toFloat();
-        tb.sendTelemetryData(feed.c_str(), value);
-    }
-}
+static WiFiClient   wifiClient;
+static PubSubClient mqttClient(wifiClient);
 
 void task_core_iot(void *pvParameters)
 {
-    // Đợi có kết nối Internet qua Semaphore
-    Serial.println("[Cloud] Waiting for Internet connection...");
-    while(1) {
-        if (xSemaphoreTake(xBinarySemaphoreInternet, portMAX_DELAY)) {
-            xSemaphoreGive(xBinarySemaphoreInternet); // Trả lại để các task khác cũng có thể lấy
+    Serial.println("[CoreIoT] Task started, waiting for internet...");
+
+    while (1) {
+        if (xSemaphoreTake(xBinarySemaphoreInternet, pdMS_TO_TICKS(5000)) == pdTRUE) {
+            xSemaphoreGive(xBinarySemaphoreInternet);
+            Serial.println("[CoreIoT] ✅ Internet ready.");
             break;
         }
-        vTaskDelay(500 / portTICK_PERIOD_MS);
+        Serial.printf("[CoreIoT] Waiting... WiFi status=%d\n", (int)WiFi.status());
     }
-    Serial.println("[Cloud] Internet connected, starting MQTT...");
+
+    Serial.printf("[CoreIoT] Server=%s  Port=%s\n", CORE_IOT_SERVER.c_str(), CORE_IOT_PORT.c_str());
+    Serial.printf("[CoreIoT] Token=%s\n", CORE_IOT_TOKEN.c_str());
+
+    mqttClient.setServer(CORE_IOT_SERVER.c_str(), CORE_IOT_PORT.toInt());
+
+    TickType_t lastSendTick = xTaskGetTickCount();
 
     while (1)
     {
-        if (!tb.connected())
+        if (!mqttClient.connected())
         {
-            Serial.print("[Cloud] Connecting to server: ");
-            Serial.println(CORE_IOT_SERVER);
-            
-            if (!tb.connect(CORE_IOT_SERVER.c_str(), CORE_IOT_TOKEN.c_str(), CORE_IOT_PORT.toInt()))
+            Serial.printf("[CoreIoT] Connecting to %s:%d ...\n",
+                CORE_IOT_SERVER.c_str(), CORE_IOT_PORT.toInt());
+
+            String clientId = "ESP32_" + WiFi.macAddress();
+            // CoreIoT: username = access token, password = empty
+            if (mqttClient.connect(clientId.c_str(), CORE_IOT_TOKEN.c_str(), ""))
             {
+                Serial.println("[CoreIoT] ✅ Connected!");
+            }
+            else
+            {
+                Serial.printf("[CoreIoT] ❌ Failed rc=%d, retry in 5s...\n", mqttClient.state());
                 vTaskDelay(5000 / portTICK_PERIOD_MS);
                 continue;
             }
-
-            tb.sendAttributeData("macAddress", WiFi.macAddress().c_str());
-            tb.sendAttributeData("localIp", WiFi.localIP().toString().c_str());
-            
-            tb.RPC_Subscribe(callbacks.cbegin(), callbacks.cend());
-            tb.Shared_Attributes_Subscribe(attributes_callback);
-            tb.Shared_Attributes_Request(attribute_shared_request_callback);
-            
-            Serial.println("[Cloud] Connected and Subscribed!");
         }
 
-        // Nhận dữ liệu từ Queue (thread-safe)
-        struct SensorData sensorData = {0.0, 0.0};
-        if (xSensorQueue != NULL) {
-            xQueueReceive(xSensorQueue, &sensorData, 0);
+        // Gửi telemetry mỗi 10 giây
+        if ((xTaskGetTickCount() - lastSendTick) >= pdMS_TO_TICKS(10000))
+        {
+            lastSendTick = xTaskGetTickCount();
+
+            SensorData sd = {0.0f, 0.0f, 0};
+            if (xSensorQueue != NULL) xQueuePeek(xSensorQueue, &sd, 0);
+
+            StaticJsonDocument<128> doc;
+            doc["temperature"] = sd.temperature;
+            doc["humidity"]    = sd.humidity;
+            char payload[128];
+            serializeJson(doc, payload, sizeof(payload));
+
+            Serial.printf("[CoreIoT] Publishing → %s : %s\n", MQTT_TOPIC, payload);
+            bool ok = mqttClient.publish(MQTT_TOPIC, payload);
+            Serial.printf("[CoreIoT] Result: %s\n", ok ? "OK" : "FAIL");
         }
 
-        // Gửi dữ liệu cảm biến định kỳ
-        tb.sendTelemetryData("temperature", sensorData.temperature);
-        tb.sendTelemetryData("humidity", sensorData.humidity);
-
-        tb.loop();
-        vTaskDelay(10000 / portTICK_PERIOD_MS); // Gửi mỗi 10 giây
+        mqttClient.loop();
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }

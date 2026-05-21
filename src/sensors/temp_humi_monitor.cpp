@@ -27,17 +27,8 @@ void temp_humi_monitor(void *pvParameters) {
         }
         float temperature = dht20.getTemperature();
         float humidity = dht20.getHumidity();
-        Serial.printf("[DHT20] read=%d  T=%.2f  H=%.2f\n", status, temperature, humidity);
-
         if (status == DHT20_OK && !isnan(temperature) && !isnan(humidity)) {
             // Gửi dữ liệu qua Queue
-            struct SensorData data;
-            data.temperature = temperature;
-            data.humidity = humidity;
-            if (xSensorQueue != NULL) {
-                xQueueOverwrite(xSensorQueue, &data); // Mailbox: ghi đè giá trị cũ
-            }
-
             // Compute combined status (temp + humidity)
             int current_status;
             if (temperature > TEMP_NORMAL_HIGH) {
@@ -47,6 +38,19 @@ void temp_humi_monitor(void *pvParameters) {
             } else {
                 current_status = 0; // NORMAL
             }
+
+            // Lưu status cùng data để webserver đọc nhất quán
+            struct SensorData data;
+            data.temperature = temperature;
+            data.humidity    = humidity;
+            data.lcd_status  = current_status;
+            if (xSensorQueue != NULL) {
+                xQueueOverwrite(xSensorQueue, &data);
+            }
+
+            const char* stat_labels[] = {"normal", "warning", "critical"};
+            Serial.printf("[DHT20] read=%d  T=%.2f  H=%.2f  stat: %s\n",
+                          status, temperature, humidity, stat_labels[current_status]);
 
             // Give status semaphore khi status thay đổi
             if (current_status != last_status) {

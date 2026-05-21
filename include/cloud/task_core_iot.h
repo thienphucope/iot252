@@ -2,13 +2,10 @@
 #define __TASK_CORE_IOT_H__
 
 #include <WiFi.h>
-#include <ThingsBoard.h>
-#include <Arduino_MQTT_Client.h>
-#include <HTTPClient.h>
-#include "connectivity/task_check_info.h"
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
 #include "global.h"
 
 void task_core_iot(void *pvParameters);
-void CORE_IOT_sendata(String mode, String feed, String data);
 
 #endif

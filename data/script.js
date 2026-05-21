@@ -2,12 +2,10 @@
 var gateway = `ws://${window.location.hostname}/ws`;
 var websocket;
 var gaugeTemp, gaugeHumi;
-var hasRealData = false; // true khi nhận được dữ liệu thật từ WebSocket
 
 window.addEventListener('load', function () {
     initGauges();
     initWebSocket();
-    startMockData(); // random khi chưa gắn phần cứng
 });
 
 function initWebSocket() {
@@ -29,10 +27,9 @@ function onMessage(event) {
     try {
         var d = JSON.parse(event.data);
         if (d.type === 'sensor') {
-            hasRealData = true;
             if (gaugeTemp) gaugeTemp.refresh(d.temp);
             if (gaugeHumi) gaugeHumi.refresh(d.humi);
-            updateStatusBadges(d.temp, d.humi);
+            updateStatusBadges(d.temp, d.humi, d.lcd);
         } else if (d.type === 'info') {
             updateInfoPanel(d);
         } else if (d.type === 'wifi_list') {
@@ -40,6 +37,9 @@ function onMessage(event) {
         } else if (d.type === 'scanning') {
             document.getElementById('wifiScanStatus').style.display = 'flex';
             document.getElementById('wifiList').innerHTML = '';
+        } else if (d.type === 'saved') {
+            alert('✅ Đã lưu! Thiết bị đang khởi động lại, trang sẽ tự tải lại sau 15 giây.');
+            setTimeout(function () { location.reload(); }, 15000);
         }
     } catch (e) {
         console.warn('Invalid JSON:', event.data);
@@ -92,44 +92,6 @@ function initGauges() {
 }
 
 
-// ==================== MOCK DATA (test khi chưa gắn phần cứng) ====================
-function startMockData() {
-    // Các biến mặc định khớp với global.cpp
-    var ssid = "ESP32-YOUR NETWORK HERE!!!";
-    var password = "12345678";
-    var wifi_ssid = "abcde";
-    var wifi_password = "123456789";
-    var core_iot_token = "default_token_123";
-    var core_iot_server = "demo.thingsboard.io";
-    var core_iot_port = "1883";
-
-    // Giả lập dữ liệu Info ngay lập tức để xem giao diện
-    setTimeout(function() {
-        if (!hasRealData) {
-            updateInfoPanel({
-                ip: "192.168.4.1",
-                uptime: 1234,
-                ssid: ssid,
-                password: password,
-                WIFI_SSID: wifi_ssid,
-                WIFI_PASS: wifi_password,
-                CORE_IOT_TOKEN: core_iot_token,
-                CORE_IOT_SERVER: core_iot_server,
-                CORE_IOT_PORT: core_iot_port
-            });
-        }
-    }, 500);
-
-    setInterval(function () {
-        if (hasRealData) return; // nhường cho dữ liệu thật
-        var t = +(15 + Math.random() * 25).toFixed(1); // 15–40°C
-        var h = +(30 + Math.random() * 50).toFixed(1); // 30–80%
-        if (gaugeTemp) gaugeTemp.refresh(t);
-        if (gaugeHumi) gaugeHumi.refresh(h);
-        updateStatusBadges(t, h);
-    }, 2000);
-}
-
 
 // ==================== NAVIGATION ====================
 function showSection(id, event) {
@@ -142,7 +104,7 @@ function showSection(id, event) {
 
 
 // ==================== STATUS BADGES ====================
-function updateStatusBadges(temp, humi) {
+function updateStatusBadges(temp, humi, lcdStatus) {
     var ledEl = document.getElementById('ledStatus');
     if (ledEl) {
         if (temp > 30) {
@@ -177,16 +139,11 @@ function updateStatusBadges(temp, humi) {
 
     var lcdEl = document.getElementById('lcdStatus');
     if (lcdEl) {
-        if (temp > 30) {
-            lcdEl.textContent = 'CRITICAL';
-            lcdEl.className = 'badge badge-danger';
-        } else if (temp >= 25 || humi < 40 || humi > 60) {
-            lcdEl.textContent = 'WARNING';
-            lcdEl.className = 'badge badge-warning';
-        } else {
-            lcdEl.textContent = 'NORMAL';
-            lcdEl.className = 'badge badge-success';
-        }
+        var s = lcdStatus || 'NORMAL';
+        lcdEl.textContent = s;
+        lcdEl.className = s === 'CRITICAL' ? 'badge badge-danger' :
+                          s === 'WARNING'  ? 'badge badge-warning' :
+                                             'badge badge-success';
     }
 }
 
@@ -349,5 +306,4 @@ document.getElementById('settingsForm').addEventListener('submit', function (e) 
             port:     document.getElementById('port').value.trim()
         }
     }));
-    alert('✅ Cấu hình đã được gửi đến thiết bị!');
 });

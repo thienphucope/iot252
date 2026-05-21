@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include "connectivity/task_check_info.h"
 #include "web_services/task_webserver.h"
+#include "global.h"
 
 extern bool Wifi_reconnect();
 extern void startAP();

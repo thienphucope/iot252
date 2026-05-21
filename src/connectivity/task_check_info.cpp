@@ -1,5 +1,7 @@
 #include "connectivity/task_check_info.h"
 
+#define FW_VERSION "2"
+
 void Load_info_File()
 {
   File file = LittleFS.open("/info.dat", "r");
@@ -55,7 +57,7 @@ void Save_info_File(String wifi_ssid, String wifi_pass, String CORE_IOT_TOKEN, S
   {
     Serial.println("Unable to save the configuration.");
   }
-  ESP.restart();
+  // Không restart ở đây - caller sẽ tự gửi response rồi mới restart
 };
 
 bool check_info_File(bool check)
@@ -67,15 +69,36 @@ bool check_info_File(bool check)
       Serial.println("❌ Lỗi khởi động LittleFS!");
       return false;
     }
+
+    // Xóa credentials cũ nếu firmware version thay đổi
+    File vf = LittleFS.open("/fw_ver.dat", "r");
+    bool versionMatch = vf && (vf.readString() == FW_VERSION);
+    if (vf) vf.close();
+    if (!versionMatch)
+    {
+      LittleFS.remove("/info.dat");
+      File wf = LittleFS.open("/fw_ver.dat", "w");
+      if (wf) { wf.print(FW_VERSION); wf.close(); }
+      Serial.println("[Info] Firmware version mới, đã xóa credentials cũ.");
+    }
+
     Load_info_File();
+
+    // Luôn bật AP để dashboard luôn truy cập được qua 192.168.4.1
+    startAP();
+
+    // Nếu có credentials: connect STA song song (mode đã là AP_STA từ startAP)
+    if (!WIFI_SSID.isEmpty())
+    {
+      if (WIFI_PASS.isEmpty())
+        WiFi.begin(WIFI_SSID.c_str());
+      else
+        WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+    }
   }
-  
+
   if (WIFI_SSID.isEmpty() && WIFI_PASS.isEmpty())
   {
-    if (!check)
-    {
-      startAP();
-    }
     return false;
   }
   return true;

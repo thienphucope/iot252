@@ -17,6 +17,7 @@
 struct SensorData {
     float temperature;
     float humidity;
+    int   lcd_status; // 0=NORMAL, 1=WARNING, 2=CRITICAL
 };
 
 // Queue để truyền dữ liệu sensor giữa các Task

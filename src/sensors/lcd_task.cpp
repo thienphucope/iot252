@@ -13,29 +13,25 @@ void lcd_task(void *pvParameters) {
     lcd.clear();
     vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    struct SensorData currentData = {0.0, 0.0};
-    String displayStatus = "NORMAL";
+    struct SensorData currentData = {0.0, 0.0, 0};
+    const char* statuses[] = {"NORMAL  ", "WARNING ", "CRITICAL"};
 
     while (1) {
-        // Nhận dữ liệu từ Queue (thread-safe)
+        // Đọc data + lcd_status từ Queue (cùng nguồn với webserver → luôn đồng bộ)
         if (xSensorQueue != NULL) {
-            xQueuePeek(xSensorQueue, &currentData, (TickType_t)100 / portTICK_PERIOD_MS); // Non-destructive: webserver cũng đọc cùng queue
+            xQueuePeek(xSensorQueue, &currentData, (TickType_t)100 / portTICK_PERIOD_MS);
         }
-        
+
         lcd.setCursor(0, 1);
         lcd.printf("T:%.1fC H:%.1f%%  ", currentData.temperature, currentData.humidity);
 
-        // Triggered by status semaphores (combined temp + humidity)
-        if (xSemaphoreTake(xStatusCriticalSemaphore, 0) == pdTRUE) {
-            displayStatus = "CRITICAL";
-        } else if (xSemaphoreTake(xStatusWarningSemaphore, 0) == pdTRUE) {
-            displayStatus = "WARNING ";
-        } else if (xSemaphoreTake(xStatusNormalSemaphore, 0) == pdTRUE) {
-            displayStatus = "NORMAL  ";
-        }
-
         lcd.setCursor(0, 0);
-        lcd.printf("STAT: %s", displayStatus.c_str());
+        lcd.printf("STAT: %s", statuses[currentData.lcd_status]);
+
+        // Drain semaphore status (để task khác không bị nghẽn nếu vẫn give)
+        xSemaphoreTake(xStatusCriticalSemaphore, 0);
+        xSemaphoreTake(xStatusWarningSemaphore, 0);
+        xSemaphoreTake(xStatusNormalSemaphore, 0);
 
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }

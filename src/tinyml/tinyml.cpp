@@ -11,10 +11,10 @@ namespace {
     constexpr int kTensorArenaSize = 10 * 1024; 
     uint8_t tensor_arena[kTensorArenaSize];
 
-    // Cấu hình dựa trên kết quả Train: Temp [25-30], Humi [40-60]
-    const float SCALER_MEAN[] = {27.5f, 50.0f}; 
-    const float SCALER_SCALE[] = {1.443f, 5.773f}; 
-    const float ANOMALY_THRESHOLD = 0.000589f;  // Ngưỡng MSE lấy từ Notebook
+    // Cập nhật từ kết quả notebook sau mỗi lần train lại
+    const float SCALER_MEAN[]  = {27.4874f, 49.9192f};
+    const float SCALER_SCALE[] = {4.2157f, 12.0575f};
+    const float ANOMALY_THRESHOLD = 0.5f;  // Sigmoid output threshold
 }
 
 void setupTinyML() {
@@ -48,7 +48,7 @@ void tiny_ml_task(void *pvParameters) {
     while (1) {
         struct SensorData sensorData;
         // Chờ nhận dữ liệu từ Queue (do task_rs485 hoặc temp_humi gửi vào)
-        if (xQueueReceive(xSensorQueue, &sensorData, portMAX_DELAY)) {
+        if (xQueuePeek(xSensorQueue, &sensorData, portMAX_DELAY)) {
             
             // 1. Pre-processing: Chuẩn hóa dữ liệu (Z-score Scaling)
             float temp_scaled = (sensorData.temperature - SCALER_MEAN[0]) / SCALER_SCALE[0];
@@ -64,18 +64,15 @@ void tiny_ml_task(void *pvParameters) {
                 continue;
             }
 
-            // 4. Tính toán sai số tái tạo (MSE)
-            float recon_temp = output->data.f[0];
-            float recon_humi = output->data.f[1];
-            
-            float mse = (pow(temp_scaled - recon_temp, 2) + pow(humi_scaled - recon_humi, 2)) / 2.0f;
+            // 4. Đọc kết quả phân loại (ANN Classifier, sigmoid output)
+            float anomaly_score = output->data.f[0];
 
             // 5. Kết luận
-            bool is_anomaly = (mse > ANOMALY_THRESHOLD);
-            
-            Serial.printf("[TinyML] Input: %.1f,%.1f | MSE: %.4f | Status: %s\n", 
-                          sensorData.temperature, sensorData.humidity, mse, 
-                          is_anomaly ? "ANOMALY!" : "Normal");
+            bool is_anomaly = (anomaly_score > ANOMALY_THRESHOLD);
+
+            const char* pred = is_anomaly ? "abnormal" : "normal";
+            Serial.printf("[TinyML] Input: %.1f,%.1f | Score: %.4f | pred: %s\n",
+                          sensorData.temperature, sensorData.humidity, anomaly_score, pred);
 
             // Kích hoạt Semaphore trạng thái để LCD/LED hiển thị
             if (is_anomaly) {
@@ -83,6 +80,7 @@ void tiny_ml_task(void *pvParameters) {
             } else {
                 xSemaphoreGive(xStatusNormalSemaphore);
             }
+            vTaskDelay(5000 / portTICK_PERIOD_MS); // Khớp chu kỳ với sensor (5s)
         }
     }
 }

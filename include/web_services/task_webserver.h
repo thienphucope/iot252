@@ -17,5 +17,6 @@ void Webserver_stop();
 void Webserver_reconnect();
 void Webserver_sendata(String data);
 void Webserver_startWifiScan();
+void Webserver_scheduleRestart(uint32_t delayMs);
 
 #endif
