@@ -49,8 +49,8 @@ void temp_humi_monitor(void *pvParameters) {
             }
 
             const char* stat_labels[] = {"normal", "warning", "critical"};
-            Serial.printf("[DHT20] read=%d  T=%.2f  H=%.2f  stat: %s\n",
-                          status, temperature, humidity, stat_labels[current_status]);
+            Serial.printf("[DHT20] T=%.2f  H=%.2f  stat: %s\n",
+                          temperature, humidity, stat_labels[current_status]);
 
             // Give status semaphore khi status thay đổi
             if (current_status != last_status) {
