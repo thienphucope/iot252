@@ -30,6 +30,8 @@ function onMessage(event) {
             if (gaugeTemp) gaugeTemp.refresh(d.temp);
             if (gaugeHumi) gaugeHumi.refresh(d.humi);
             updateStatusBadges(d.temp, d.humi, d.lcd);
+            if (d.led_en !== undefined) updateActuatorToggle('led', d.led_en);
+            if (d.neo_en !== undefined) updateActuatorToggle('neo', d.neo_en);
         } else if (d.type === 'info') {
             updateInfoPanel(d);
         } else if (d.type === 'wifi_list') {
@@ -145,6 +147,41 @@ function updateStatusBadges(temp, humi, lcdStatus) {
                           s === 'WARNING'  ? 'badge badge-warning' :
                                              'badge badge-success';
     }
+}
+
+function updateActuatorToggle(type, isEnabled) {
+    var btn = document.getElementById(type + 'ToggleBtn');
+    if (btn) {
+        if (isEnabled) {
+            btn.classList.add('on');
+            btn.textContent = 'ON';
+        } else {
+            btn.classList.remove('on');
+            btn.textContent = 'OFF';
+        }
+    }
+}
+
+function toggleActuator(type) {
+    var btn = document.getElementById(type + 'ToggleBtn');
+    if (!btn) return;
+    var isCurrentlyOn = btn.classList.contains('on');
+    var newState = !isCurrentlyOn;
+    
+    // Update UI immediately (optimistic UI)
+    if (newState) {
+        btn.classList.add('on');
+        btn.textContent = 'ON';
+    } else {
+        btn.classList.remove('on');
+        btn.textContent = 'OFF';
+    }
+    
+    Send_Data(JSON.stringify({
+        page: 'actuator',
+        device: type,
+        status: newState ? 'ON' : 'OFF'
+    }));
 }
 
 

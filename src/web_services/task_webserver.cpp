@@ -69,10 +69,10 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
         if (xSensorQueue != NULL && xQueuePeek(xSensorQueue, &data, 0) == pdTRUE) {
             const char* lcd = (data.lcd_status == 2) ? "CRITICAL" :
                               (data.lcd_status == 1) ? "WARNING"  : "NORMAL";
-            char json[128];
+            char json[256];
             snprintf(json, sizeof(json),
-                     "{\"type\":\"sensor\",\"temp\":%.1f,\"humi\":%.1f,\"lcd\":\"%s\"}",
-                     data.temperature, data.humidity, lcd);
+                     "{\"type\":\"sensor\",\"temp\":%.1f,\"humi\":%.1f,\"lcd\":\"%s\",\"led_en\":%s,\"neo_en\":%s}",
+                     data.temperature, data.humidity, lcd, led_blinky_enabled ? "true" : "false", neo_blinky_enabled ? "true" : "false");
             client->text(String(json));
         }
     } else if (type == WS_EVT_DISCONNECT) {
@@ -145,10 +145,10 @@ void task_webserver_run(void *pvParameters) {
             if (xSensorQueue != NULL && xQueuePeek(xSensorQueue, &data, 0) == pdTRUE) {
                 const char* lcd = (data.lcd_status == 2) ? "CRITICAL" :
                                   (data.lcd_status == 1) ? "WARNING"  : "NORMAL";
-                char json[128];
+                char json[256];
                 snprintf(json, sizeof(json),
-                         "{\"type\":\"sensor\",\"temp\":%.1f,\"humi\":%.1f,\"lcd\":\"%s\"}",
-                         data.temperature, data.humidity, lcd);
+                         "{\"type\":\"sensor\",\"temp\":%.1f,\"humi\":%.1f,\"lcd\":\"%s\",\"led_en\":%s,\"neo_en\":%s}",
+                         data.temperature, data.humidity, lcd, led_blinky_enabled ? "true" : "false", neo_blinky_enabled ? "true" : "false");
                 ws.textAll(String(json));
             }
         }

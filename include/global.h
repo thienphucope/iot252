@@ -54,4 +54,7 @@ extern String core_iot_port;
 
 extern boolean isWifiConnected;
 extern SemaphoreHandle_t xBinarySemaphoreInternet;
+
+extern bool led_blinky_enabled;
+extern bool neo_blinky_enabled;
 #endif

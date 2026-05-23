@@ -67,12 +67,14 @@
           <div class="status-label">LED đơn</div>
           <div id="ledStatus" class="badge badge-muted">--</div>
           <div class="status-sub">GPIO 48 · Tốc độ chớp theo nhiệt độ</div>
+          <button id="ledToggleBtn" class="toggle-btn on" onclick="toggleActuator('led')" style="margin-top:10px;">ON</button>
         </div>
         <div class="status-card">
           <i class="fa-solid fa-circle-dot status-icon" id="neoIcon"></i>
           <div class="status-label">NeoPixel</div>
           <div id="neoStatus" class="badge badge-muted">--</div>
           <div class="status-sub">GPIO 45 · Màu sắc theo độ ẩm</div>
+          <button id="neoToggleBtn" class="toggle-btn on" onclick="toggleActuator('neo')" style="margin-top:10px;">ON</button>
         </div>
         <div class="status-card">
           <i class="fa-solid fa-display status-icon"></i>
@@ -269,6 +271,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=2"></script>
 </body>
 </html>

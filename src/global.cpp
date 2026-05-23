@@ -33,6 +33,9 @@ String core_iot_port;
 boolean isWifiConnected = false;
 SemaphoreHandle_t xBinarySemaphoreInternet = xSemaphoreCreateBinary();
 
+bool led_blinky_enabled = true;
+bool neo_blinky_enabled = true;
+
 // Hàm khởi tạo các đối tượng RTOS
 void init_globals() {
     // WIFI_SSID/WIFI_PASS phải bắt đầu rỗng để check_info_File() có thể kích hoạt AP mode

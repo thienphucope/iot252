@@ -15,10 +15,16 @@ void led_blinky(void *pvParameters) {
             blinkInterval = 2000; // Chớp chậm: Lạnh (< 25°C)
         }
 
-        // Thực hiện chớp LED
-        digitalWrite(LED_GPIO, HIGH);
-        vTaskDelay(blinkInterval / portTICK_PERIOD_MS);
-        digitalWrite(LED_GPIO, LOW);
-        vTaskDelay(blinkInterval / portTICK_PERIOD_MS);
+        if (led_blinky_enabled) {
+            // Thực hiện chớp LED
+            digitalWrite(LED_GPIO, HIGH);
+            vTaskDelay(blinkInterval / portTICK_PERIOD_MS);
+            digitalWrite(LED_GPIO, LOW);
+            vTaskDelay(blinkInterval / portTICK_PERIOD_MS);
+        } else {
+            // Tắt LED nếu bị vô hiệu hóa
+            digitalWrite(LED_GPIO, LOW);
+            vTaskDelay(500 / portTICK_PERIOD_MS); // Nghỉ một chút để tránh vòng lặp quá nhanh
+        }
     }
 }

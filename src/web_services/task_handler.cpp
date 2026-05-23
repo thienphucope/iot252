@@ -14,7 +14,23 @@ void handleWebSocketMessage(String message)
         return;
     }
     JsonObject value = doc["value"];
-    if (doc["page"] == "device")
+    String page = doc["page"].as<String>();
+
+    if (page == "actuator")
+    {
+        String device = doc["device"].as<String>();
+        String status = doc["status"].as<String>();
+        bool isEnabled = status.equalsIgnoreCase("ON");
+
+        if (device == "led") {
+            led_blinky_enabled = isEnabled;
+            Serial.printf("⚙️ LED Blinky is now %s\n", isEnabled ? "ENABLED" : "DISABLED");
+        } else if (device == "neo") {
+            neo_blinky_enabled = isEnabled;
+            Serial.printf("⚙️ NeoPixel Blinky is now %s\n", isEnabled ? "ENABLED" : "DISABLED");
+        }
+    }
+    else if (page == "device")
     {
         if (!value.containsKey("gpio") || !value.containsKey("status"))
         {
@@ -38,11 +54,11 @@ void handleWebSocketMessage(String message)
             Serial.printf("💤 GPIO %d OFF\n", gpio);
         }
     }
-    else if (doc["page"] == "scan_wifi")
+    else if (page == "scan_wifi")
     {
         Webserver_startWifiScan();
     }
-    else if (doc["page"] == "setting")
+    else if (page == "setting")
     {
         WIFI_SSID = doc["value"]["ssid"].as<String>();
         WIFI_PASS = doc["value"]["password"].as<String>();
